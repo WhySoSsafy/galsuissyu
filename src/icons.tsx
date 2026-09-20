@@ -7,11 +7,14 @@
 const base={width:22,height:22,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.7,strokeLinecap:'round' as const,strokeLinejoin:'round' as const,'aria-hidden':true};
 
 export function SearchIcon(){
- return <svg {...base}><circle cx="11" cy="11" r="6.4"/><path d="M15.8 15.8 20.5 20.5"/></svg>;
+ // The circle is where the eye puts this glyph's centre, so the ink box sits a touch right of the
+ // box centre to make the circle itself land on it.
+ return <svg {...base}><circle cx="10.9" cy="10.9" r="6.2"/><path d="M15.4 15.4 19.9 19.9"/></svg>;
 }
 
 export function RouteIcon(){
- return <svg {...base}><path d="M3.5 7.5h10.5a3.5 3.5 0 0 1 0 7H8"/><path d="M11 4.5 14 7.5 11 10.5"/><path d="M6.5 11.5 3.5 14.5 6.5 17.5"/></svg>;
+ // Two arrows exchanging, drawn symmetrically about the centre in both axes.
+ return <svg {...base}><path d="M4 9h13"/><path d="M14 6l3 3-3 3"/><path d="M20 15H7"/><path d="M10 12l-3 3 3 3"/></svg>;
 }
 
 export function MapIcon(){
