@@ -65,6 +65,13 @@ test('a close button receives its own clicks', () => {
   assert.match(rule, /height:44px/);
 });
 
+test('the browse list counts places, not bus stops', () => {
+  // The header read "4,256곳" while the same screen's coverage figure said 1,975. Bus stops belong
+  // on the map and in the routing; nobody browses to one.
+  assert.match(explorer, /\(q\|\|!p\.id\.startsWith\('bus-'\)\)/,
+    'stops are out of the default list but still reachable by name');
+});
+
 test('the film is reachable from the header', () => {
   const explorer = readFileSync('src/CityExplorer.tsx', 'utf8');
   const header = explorer.slice(explorer.indexOf('dj-header'), explorer.indexOf('</header>'));
