@@ -257,3 +257,6 @@
 .arrival-actions button{flex:1;min-width:104px;min-height:44px;border-radius:10px;border:1px solid #d3dde2;background:#fff;color:#33566b;font-size:13px;font-weight:650}
 .arrival-actions .arrival-primary{background:#28485b;border-color:#28485b;color:#fff}
 @media(max-width:740px){.showcase-exit{right:12px;top:calc(10px + env(safe-area-inset-top,0px))}.arrival-actions button{min-width:0;font-size:12px}}
+.dj-intro-link{margin-left:auto;min-height:42px;padding:0 16px;border-radius:11px;border:1px solid #d6dfe4;background:#fff;color:#2c4557;font-size:13.5px;font-weight:650;white-space:nowrap}
+.dj-intro-link:hover{background:#f2f5f7;border-color:#b9c8d1}
+@media(max-width:740px){.dj-intro-link{display:none}}

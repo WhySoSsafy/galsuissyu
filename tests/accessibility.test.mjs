@@ -52,3 +52,22 @@ test('the page has exactly one top-level heading', () => {
 test('the document declares its language', () => {
   assert.match(readFileSync('index.html', 'utf8'), /<html lang="ko">/);
 });
+
+test('a close button receives its own clicks', () => {
+  // The survey's art panel is painted after the close button and was taking them: pressing the
+  // middle of the × hit the illustration, and only the top few pixels closed anything.
+  const css = readFileSync('src/city-explorer.css', 'utf8');
+  const at = css.indexOf('.dj-survey-close{');
+  assert.notEqual(at, -1);
+  const rule = css.slice(at, css.indexOf('}', at));
+  assert.match(rule, /z-index:\s*[1-9]/, 'it has to sit above the panel it is on');
+  assert.match(rule, /width:44px/, 'and be a reachable size');
+  assert.match(rule, /height:44px/);
+});
+
+test('the film is reachable from the header', () => {
+  const explorer = readFileSync('src/CityExplorer.tsx', 'utf8');
+  const header = explorer.slice(explorer.indexOf('dj-header'), explorer.indexOf('</header>'));
+  assert.match(header, /dj-intro-link/, 'a visitor who skipped it should be able to go back');
+  assert.match(header, /'\/intro'/, 'and it uses the address, not just state');
+});
