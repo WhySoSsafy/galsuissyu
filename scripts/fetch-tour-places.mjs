@@ -14,13 +14,14 @@ const KEY=env.TOUR_API_KEY;
 if(!KEY){console.error('TOUR_API_KEY가 없어요. .env.local에 설정해 주세요.');process.exit(1);}
 
 const BASE='https://apis.data.go.kr/B551011/KorService2';
+const BARRIER_FREE_BASE='https://apis.data.go.kr/B551011/KorWithService2';
 const AREA_DAEJEON='3';
 // 12 관광지 · 14 문화시설 · 15 축제공연행사 · 28 레포츠 · 32 숙박 · 38 쇼핑 · 39 음식점
 const TYPES=['12','14','15','28','32','38','39'];
 const TYPE_LABELS={12:'관광지',14:'문화시설',15:'축제·공연',28:'레포츠',32:'숙박',38:'쇼핑',39:'음식점'};
 
-async function call(operation,params){
- const url=new URL(BASE+'/'+operation);
+async function call(operation,params,base=BASE){
+ const url=new URL(base+'/'+operation);
  url.searchParams.set('serviceKey',KEY);
  url.searchParams.set('MobileOS','ETC');
  url.searchParams.set('MobileApp','galsuissyu');
@@ -45,16 +46,29 @@ async function call(operation,params){
 
 const rows=x=>x?[].concat(x.items?.item??[]):[];
 
-async function listType(contentTypeId){
+// The portal caps requests per second and reports the overrun as an auth-shaped error, so treat
+// that one code as pacing and try again instead of losing the record.
+async function callWithBackoff(operation,params,base){
+ for(let attempt=0;;attempt++){
+  try{return await call(operation,params,base);}
+  catch(error){
+   if(!error.retryable||attempt>=5)throw error;
+   await new Promise(r=>setTimeout(r,400*(attempt+1)));
+  }
+ }
+}
+
+async function listAll(params,base){
  const collected=[];
  for(let page=1;;page++){
-  const body=await call('areaBasedList2',{areaCode:AREA_DAEJEON,contentTypeId,numOfRows:100,pageNo:page});
+  const body=await callWithBackoff('areaBasedList2',{areaCode:AREA_DAEJEON,numOfRows:100,pageNo:page,...params},base);
   const items=rows(body);
   collected.push(...items);
   if(collected.length>=Number(body.totalCount||0)||!items.length)break;
  }
  return collected;
 }
+const listType=contentTypeId=>listAll({contentTypeId});
 
 // Only the fields we can actually show. Everything else is left out rather than stored "just in case".
 function intro(item,contentTypeId){
@@ -74,6 +88,23 @@ function intro(item,contentTypeId){
  };
 }
 
+// KorWithService2 returns one flat record per place. Group it the way a traveller asks the
+// question -- can I get in, can I get around, can I read it, can I hear it, can I bring the baby --
+// and keep the provider's own wording inside each field.
+const clean=v=>typeof v==='string'?v.replace(/<br\s*\/?>/gi,'\n').replace(/&nbsp;/g,' ').trim():'';
+const anyOf=obj=>Object.values(obj).some(Boolean)?obj:null;
+function barrierFree(item){
+ if(!item)return null;
+ const f=name=>clean(item[name]);
+ return {
+  getIn:anyOf({entrance:f('exit'),parking:f('parking'),publicTransport:f('publictransport'),ticketOffice:f('ticketoffice')}),
+  moveAround:anyOf({route:f('route'),elevator:f('elevator'),restroom:f('restroom'),wheelchair:f('wheelchair'),auditorium:f('auditorium'),room:f('room'),note:f('handicapetc')}),
+  vision:anyOf({brailleBlock:f('braileblock'),guideDog:f('helpdog'),audioGuide:f('audioguide'),bigPrint:f('bigprint'),braillePromotion:f('brailepromotion'),guideSystem:f('guidesystem'),humanGuide:f('guidehuman'),note:f('blindhandicapetc')}),
+  hearing:anyOf({signGuide:f('signguide'),videoGuide:f('videoguide'),hearingRoom:f('hearingroom'),note:f('hearinghandicapetc')}),
+  family:anyOf({stroller:f('stroller'),lactationRoom:f('lactationroom'),babyChair:f('babysparechair'),note:f('infantsfamilyetc')}),
+ };
+}
+
 const limit=async(items,size,worker)=>{
  const out=[];let index=0;
  await Promise.all(Array.from({length:size},async()=>{
@@ -89,8 +120,17 @@ for(const type of TYPES){
  listed.push(...items.map(item=>({item,type})));
 }
 
+// The barrier-free service lists a different slice of the same catalogue, so anything it knows that
+// the general list missed is added rather than dropped.
+const accessible=await listAll({},BARRIER_FREE_BASE);
+const known=new Set(listed.map(x=>String(x.item.contentid)));
+const extra=accessible.filter(item=>!known.has(String(item.contentid)));
+listed.push(...extra.map(item=>({item,type:String(item.contenttypeid)})));
+const accessibleIds=new Set(accessible.map(item=>String(item.contentid)));
+console.log(`무장애 여행정보: ${accessible.length}건 (일반 목록에 없던 ${extra.length}건 추가)`);
+
 console.log(`상세 정보를 받는 중… ${listed.length}건`);
-let done=0,failed=0;
+let done=0,failed=0,accessFailed=0;
 const places=await limit(listed,2,async({item,type})=>{
  // The portal caps requests per second, so back off and try again rather than dropping the record.
  let detail=null;
@@ -102,6 +142,11 @@ const places=await limit(listed,2,async({item,type})=>{
   }
  }
  if(!detail){failed++;detail=intro(null,type);}
+ let access=null;
+ if(accessibleIds.has(String(item.contentid))){
+  try{access=barrierFree(rows(await callWithBackoff('detailWithTour2',{contentId:item.contentid},BARRIER_FREE_BASE))[0]);}
+  catch{accessFailed++;}
+ }
  if(++done%40===0)console.log(`  ${done}/${listed.length}`);
  const lon=Number(item.mapx),lat=Number(item.mapy);
  return {
@@ -117,12 +162,15 @@ const places=await limit(listed,2,async({item,type})=>{
   tel:item.tel||'',
   modifiedAt:String(item.modifiedtime||''),
   ...detail,
+  barrierFree:access,
  };
 });
 
 const withCoordinates=places.filter(p=>p.lon!==null&&p.lat!==null);
+const documented=places.filter(p=>p.barrierFree&&Object.values(p.barrierFree).some(Boolean));
 const snapshot={
- source:'한국관광공사 TourAPI 4.0 (KorService2) · 공공데이터포털',
+ source:'한국관광공사 TourAPI 4.0 · 공공데이터포털',
+ services:['KorService2 (국문 관광정보)','KorWithService2 (무장애 여행정보)'],
  license:'출처 표시 조건 하에 이용',
  areaCode:AREA_DAEJEON,
  collectedAt:new Date().toISOString().slice(0,10),
@@ -132,6 +180,12 @@ const snapshot={
   withHours:places.filter(p=>p.hours).length,
   withParking:places.filter(p=>p.parking).length,
   strollerNoted:places.filter(p=>p.strollerNote).length,
+  barrierFree:documented.length,
+  barrierFreeGetIn:places.filter(p=>p.barrierFree?.getIn).length,
+  barrierFreeMoveAround:places.filter(p=>p.barrierFree?.moveAround).length,
+  barrierFreeVision:places.filter(p=>p.barrierFree?.vision).length,
+  barrierFreeHearing:places.filter(p=>p.barrierFree?.hearing).length,
+  barrierFreeFamily:places.filter(p=>p.barrierFree?.family).length,
  },
  places:places.sort((a,b)=>a.name.localeCompare(b.name,'ko')),
 };
@@ -141,3 +195,4 @@ await writeFile('public/data/tour-places.json',JSON.stringify(snapshot));
 console.log('\n저장: public/data/tour-places.json');
 console.log(JSON.stringify(snapshot.counts,null,1));
 if(failed)console.log(`상세를 받지 못한 항목 ${failed}건은 빈 값으로 남겼어요.`);
+if(accessFailed)console.log(`무장애 상세를 받지 못한 항목 ${accessFailed}건은 미확인으로 남겼어요.`);
