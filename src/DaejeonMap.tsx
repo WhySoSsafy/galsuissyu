@@ -144,15 +144,15 @@ export const DaejeonMap=forwardRef<CityViewHandle,Props>(function DaejeonMap(pro
    // A train covers ground fast and deserves room; a walk is where the kerbs matter. Getting on and
    // off is the moment a transfer is decided, so the camera drops in and swings round to look at it.
    const boarding=at?.phase==='boarding'||at?.phase==='alighting';
-   const targetZoom=boarding?17.6:leg==='subway'?16.1:leg==='bus'?16.6:leg==='walk'?17.3:17;
-   const zoom=m.getZoom(),pitch=m.getPitch(),targetPitch=boarding?62:55;
-   // Face the way the traveller is going, so the run reads as a ride rather than a map being panned.
-   const heading=at?(90-at.heading*180/Math.PI+360)%360:m.getBearing();
-   const bearing=m.getBearing(),delta=((heading-bearing+540)%360)-180;
-   // Each leg has its own framing, so the zoom has to ease both ways, not only inwards. Bearing is
-   // eased more slowly than position; matching it frame for frame would make the view swim.
-   if(Math.abs(lon-center.lng)+Math.abs(lat-center.lat)>1e-9||Math.abs(pitch-targetPitch)>.01||Math.abs(zoom-targetZoom)>.001||Math.abs(delta)>.05)
-    m.jumpTo({center:[lon,lat],pitch:pitch+(targetPitch-pitch)*blend,zoom:zoom+(targetZoom-zoom)*blend,bearing:bearing+delta*blend*.45});
+   const targetZoom=boarding?17.3:leg==='subway'?16.3:leg==='bus'?16.7:leg==='walk'?17.1:17;
+   const zoom=m.getZoom(),pitch=m.getPitch(),targetPitch=boarding?58:55;
+   // The camera does not turn with the traveller. Rotating the world while it moves under you is a
+   // standard way to make people motion sick, and this app exists for people who are already
+   // managing that. Framing changes by leg, but the bearing the viewer set is left alone, and the
+   // zoom and tilt are eased at a third of the tracking rate so nothing lurches.
+   const slow=blend*.34;
+   if(Math.abs(lon-center.lng)+Math.abs(lat-center.lat)>1e-9||Math.abs(pitch-targetPitch)>.01||Math.abs(zoom-targetZoom)>.001)
+    m.jumpTo({center:[lon,lat],pitch:pitch+(targetPitch-pitch)*slow,zoom:zoom+(targetZoom-zoom)*slow});
    frame=requestAnimationFrame(tick);
   };
   frame=requestAnimationFrame(tick);
