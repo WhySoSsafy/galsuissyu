@@ -77,6 +77,9 @@
 .dj-place-main{flex:1;min-width:0;display:flex;align-items:center;gap:11px;padding:15px 0;text-align:left;background:transparent;border:0}
 .dj-row-actions{display:flex;gap:5px;flex-shrink:0}
 .dj-row-actions button{padding:0 11px}
+.journey-mini-speed{min-height:34px;border:1px solid #d8e0e5;border-radius:8px;background:#fff;color:#334e60;font-size:12px;padding:0 4px}
+.journey-mini-follow{width:36px;min-height:34px;border:1px solid #d8e0e5;border-radius:8px;background:#fff;color:#7b8892;font-size:16px}
+.journey-mini-follow[aria-pressed=true]{background:#28485b;border-color:#28485b;color:#fff}
 .dj-panel-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:12px;padding:4px;background:#f1f3ef;border-radius:11px}
 .dj-panel-tabs button{min-height:40px;border-radius:8px;font-size:14px;color:#6c7c72;background:transparent;border:0;font-weight:600}
 .dj-panel-tabs button[aria-selected=true]{background:#fff;color:#2c4433;box-shadow:0 1px 4px #26402e1a}

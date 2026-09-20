@@ -4,21 +4,23 @@
  .daejeon-app{--nav-height:calc(64px + env(safe-area-inset-bottom,0px));background:#fff;color:#263b36}
  .dj-header{display:none}.dj-layout{height:100%;display:block}
  .dj-map-stage{inset:0 0 var(--nav-height)}
- .dj-mobile-search{position:absolute;z-index:9;top:calc(10px + env(safe-area-inset-top,0px));left:12px;right:12px;display:flex;align-items:center;gap:4px;height:52px;padding:0 4px;background:#fff;border:1px solid #d9e4df;border-radius:14px;box-shadow:0 4px 20px #142f261c}
+ .dj-mobile-search{position:absolute;z-index:9;top:calc(10px + env(safe-area-inset-top,0px));left:12px;right:12px;display:flex;align-items:center;gap:4px;height:52px;padding:0 4px;background:#fff;border:1px solid #d9e4df;border-radius:14px;box-shadow:0 4px 20px #1d35451c}
  .dj-mobile-search input{width:100%;min-width:0;border:0;background:transparent;outline:0;font-size:16px;height:48px;color:#233d32}
  .dj-mobile-region{pointer-events:auto}
  .dj-mobile-search button{flex-shrink:0;min-width:44px;min-height:44px;font-size:24px;color:#247854}
- .dj-mobile-nav{display:grid;grid-template-columns:repeat(4,1fr);position:absolute;bottom:0;left:0;right:0;z-index:12;height:var(--nav-height);padding-bottom:env(safe-area-inset-bottom,0px);background:#fff;border-top:1px solid #e2e9e5}
- .dj-mobile-nav button{display:flex;align-items:center;justify-content:center;gap:3px;flex-direction:column;min-height:60px;font-size:14px;color:#6a7772}
- .dj-mobile-nav button>span{font-size:23px;line-height:25px}.dj-mobile-nav button[aria-current=page]{color:#16764f;font-weight:750;background:#f0faf5}
+ /* A floating bar rather than a slab bolted to the bottom edge: it reads as part of the map, and the
+   active destination is a filled chip instead of a tinted panel. */
+.dj-mobile-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;position:absolute;bottom:calc(8px + env(safe-area-inset-bottom,0px));left:10px;right:10px;z-index:12;height:60px;padding:5px;background:#ffffffee;backdrop-filter:blur(14px);border:1px solid #e4e9ec;border-radius:18px;box-shadow:0 6px 26px #1d354522}
+ .dj-mobile-nav button{display:flex;align-items:center;justify-content:center;gap:2px;flex-direction:column;min-height:50px;border-radius:13px;font-size:11px;font-weight:600;color:#7b8892;background:transparent;border:0;transition:background .16s ease,color .16s ease}
+ .dj-mobile-nav button>span{font-size:19px;line-height:21px}.dj-mobile-nav button[aria-current=page]{color:#fff;background:#28485b}
  .dj-map-top{top:calc(72px + env(safe-area-inset-top,0px));left:12px;right:12px;gap:8px}
  .dj-districts{display:none}.dj-mobile-region{display:block;position:absolute;left:0;top:0;width:108px;min-height:38px;padding:7px;border:1px solid #d5e2dc;border-radius:10px;background:white;color:#226747;font-size:14px}.dj-pilot-shortcut{font-size:14px!important;min-height:38px;padding:7px 12px;max-width:calc(100% - 116px);margin-left:116px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;background:#fff;color:#226747;border-color:#d5e2dc}
  .dj-categories{flex-wrap:nowrap;overflow-x:auto;max-width:100%;max-height:none;width:100%;padding-bottom:5px;scrollbar-width:none}
- .dj-categories button{min-height:42px;font-size:14px;padding:8px 14px;flex-shrink:0;color:#445d50;background:#fff}.dj-categories button.active{background:#147653;color:#fff;border-color:#147653}
+ .dj-categories button{min-height:42px;font-size:14px;padding:8px 14px;flex-shrink:0;color:#445d50;background:#fff}.dj-categories button.active{background:#28485b;color:#fff;border-color:#28485b}
  .dj-map-controls{top:calc(178px + env(safe-area-inset-top,0px));right:12px;display:grid;grid-template-columns:44px 44px;background:white;box-shadow:0 3px 15px #233c2520}
  .dj-map-controls button{width:44px;height:44px;border:1px solid #edf1ee}.dj-map-controls button:last-child{grid-column:1 / -1;width:88px}
  .dj-map-caption,.dj-expo-shortcut{display:none}
- .dj-panel,.dj-panel.expanded{position:absolute;bottom:var(--nav-height);left:0;right:0;height:112px;max-height:calc(100% - 130px - var(--nav-height));border-radius:22px 22px 0 0;box-shadow:0 -4px 24px #1b3d2520;z-index:8;transition:height .22s ease;overflow:hidden}
+ .dj-panel,.dj-panel.expanded{position:absolute;bottom:var(--nav-height);left:0;right:0;height:112px;max-height:calc(100% - 130px - var(--nav-height));border-radius:22px 22px 0 0;box-shadow:0 -4px 24px #1d354520;z-index:8;transition:height .22s ease;overflow:hidden}
  .sheet-half .dj-panel{height:46%}.sheet-full .dj-panel{height:calc(100% - 130px - var(--nav-height))}
  .dj-sheet-handle{height:30px;min-height:30px;padding:8px;display:flex;justify-content:center;align-items:center;touch-action:none}
  .dj-sheet-handle span{display:block;width:40px;height:5px;border-radius:5px;background:#cad5ce}
@@ -48,22 +50,28 @@
 
 /* Compact map-first revision: secondary tools open explicitly, never stack. */
 .dj-map-menu h3{font-size:15px;margin:22px 0 10px}.dj-map-menu select{width:100%;min-height:44px;font-size:16px;border:1px solid #cbd9d3;border-radius:10px;padding:8px;background:white;color:#243e34}
-.dj-menu-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}.dj-menu-options button{min-height:46px;background:#f2f6f3;border:1px solid #dbe6df;border-radius:9px;font-size:15px;color:#294b3c}.dj-menu-options button[aria-pressed=true]{background:#157454;color:white}
+.dj-menu-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}.dj-menu-options button{min-height:46px;background:#f2f6f3;border:1px solid #dbe6df;border-radius:9px;font-size:15px;color:#294b3c}.dj-menu-options button[aria-pressed=true]{background:#28485b;color:white}
 @media(max-width:740px){
- .daejeon-app{--nav-height:calc(52px + env(safe-area-inset-bottom,0px));--search-bottom:calc(66px + env(safe-area-inset-top,0px))}
+ .daejeon-app{--nav-height:calc(76px + env(safe-area-inset-bottom,0px));--search-bottom:calc(66px + env(safe-area-inset-top,0px))}
  .dj-mobile-search{top:calc(8px + env(safe-area-inset-top,0px));height:48px;padding:0 2px;border-radius:12px}.dj-mobile-search input{height:44px}.dj-mobile-search button{width:44px;height:44px}
- .dj-mobile-nav button{min-height:52px;font-size:12px;color:#536960;gap:2px}.dj-mobile-nav button>span{font-size:22px;line-height:24px}
+ .dj-mobile-nav button{min-height:46px;font-size:11px;gap:2px}.dj-mobile-nav button>span{font-size:18px;line-height:20px}
  .dj-map-top,.dj-pilot-loading.is-routine{display:none}
  .dj-map-controls{top:var(--search-bottom);right:12px;display:block;border-radius:12px;overflow:hidden}.dj-map-controls button{display:none}.dj-map-controls button:last-child{display:block;width:44px;height:44px;border:0;font-size:25px}
- .dj-panel,.dj-panel.expanded{bottom:calc(var(--nav-height) + 8px);left:10px;right:10px;height:82px;max-height:calc(100% - var(--search-bottom) - var(--nav-height) - 16px);border-radius:16px;box-shadow:0 3px 22px #1b3d2524}
+ .dj-panel,.dj-panel.expanded{bottom:calc(var(--nav-height) + 8px);left:10px;right:10px;height:82px;max-height:calc(100% - var(--search-bottom) - var(--nav-height) - 16px);border-radius:16px;box-shadow:0 3px 22px #1d354524}
  .mobile-browse .dj-panel{display:none}.sheet-half .dj-panel{height:40%}.sheet-full .dj-panel{height:calc(100% - var(--search-bottom) - var(--nav-height) - 16px)}
  .dj-mobile-summary{flex-direction:row;align-items:center;gap:4px;padding:12px 10px 12px 16px;height:82px}.dj-mobile-summary>div{flex:1;min-width:0}.dj-mobile-summary strong{display:block;font-size:17px;line-height:24px}.dj-mobile-summary small{display:block;font-size:13px;line-height:19px;margin-top:4px;color:#586e62}
- .dj-mobile-summary button{min-height:44px;padding:0 8px;font-size:14px;color:#176a4d;flex-shrink:0}.dj-mobile-summary button:last-child{width:44px;font-size:24px}
+ .dj-mobile-summary button{min-height:44px;padding:0 8px;font-size:14px;color:#28485b;flex-shrink:0}.dj-mobile-summary button:last-child{width:44px;font-size:24px}
  .dj-scroll{height:calc(100% - 82px);padding:10px 16px 24px}.sheet-peek .dj-scroll{display:none}.dj-pilot-card{display:none}
  .dj-place-actions{margin-top:0}.dj-place-actions button{min-height:46px;font-size:15px}.dj-place-detail h3,.dj-detail-copy,.dj-facts,.dj-place-row strong,.dj-endpoints strong{line-height:1.6}.dj-place-row small,.dj-place-row em,.dj-detail-data,.dj-quiet{color:#53665a}
  .map-tile-loading{top:var(--search-bottom);bottom:auto;left:12px;max-width:calc(100% - 78px);padding:6px 9px;font-size:12px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#ffffffda}
  .dj-pilot-loading.is-error{top:auto;bottom:12px;left:12px;max-width:calc(100% - 24px);font-size:13px;padding:9px;line-height:1.5}.mobile-place .dj-pilot-loading.is-error{bottom:100px}
  .dj-map-stage .maplibregl-ctrl-bottom-left,.dj-map-stage .maplibregl-ctrl-bottom-right{bottom:0}.mobile-place .dj-map-stage .maplibregl-ctrl-bottom-left,.mobile-place .dj-map-stage .maplibregl-ctrl-bottom-right{bottom:94px}.sheet-half .dj-map-stage .maplibregl-ctrl-bottom-left,.sheet-half .dj-map-stage .maplibregl-ctrl-bottom-right{bottom:42dvh}
+ /* The sheet header already names what is listed and counts it, so the list repeats itself. */
+ .dj-browse-results>.dj-section-title{display:none}
+ /* A sheet that reaches the search box leaves no map, and the map is the point. Cap it so a
+    third of the screen always shows where these places actually are. */
+ .sheet-full .dj-panel{height:calc(66% - var(--nav-height)/2)}
+ .is-picking .dj-panel,.is-picking .dj-panel.expanded{height:calc(66% - var(--nav-height)/2)}
  /* The desktop opens a place beside the list. A phone has no room beside anything, so the detail
     card becomes the sheet itself: same rounded top, same place above the nav, and it covers the
     list rather than sitting next to it. */

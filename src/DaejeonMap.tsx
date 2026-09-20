@@ -139,12 +139,20 @@ export const DaejeonMap=forwardRef<CityViewHandle,Props>(function DaejeonMap(pro
    const dt=Math.min(.05,Math.max(0,(now-previous)/1000));previous=now;
    const center=m.getCenter(),blend=reduced()?1:1-Math.exp(-dt*8);
    const lon=center.lng+(coordinate[0]-center.lng)*blend,lat=center.lat+(coordinate[1]-center.lat)*blend;
-   const leg=s.transitSimulation?transitPoint(s.transitSimulation,s.transitProgress).segment.mode:null;
-   // A train covers ground fast and deserves room; a walk is where the kerbs matter.
-   const targetZoom=leg==='subway'?16.1:leg==='bus'?16.6:leg==='walk'?17.3:17,zoom=m.getZoom(),pitch=m.getPitch();
-   // Each leg has its own framing, so the zoom has to ease both ways, not only inwards.
-   if(Math.abs(lon-center.lng)+Math.abs(lat-center.lat)>1e-9||pitch<54.99||Math.abs(zoom-targetZoom)>.001)
-    m.jumpTo({center:[lon,lat],pitch:pitch+(55-pitch)*blend,zoom:zoom+(targetZoom-zoom)*blend});
+   const at=s.transitSimulation?transitPoint(s.transitSimulation,s.transitProgress):null;
+   const leg=at?at.segment.mode:null;
+   // A train covers ground fast and deserves room; a walk is where the kerbs matter. Getting on and
+   // off is the moment a transfer is decided, so the camera drops in and swings round to look at it.
+   const boarding=at?.phase==='boarding'||at?.phase==='alighting';
+   const targetZoom=boarding?17.6:leg==='subway'?16.1:leg==='bus'?16.6:leg==='walk'?17.3:17;
+   const zoom=m.getZoom(),pitch=m.getPitch(),targetPitch=boarding?62:55;
+   // Face the way the traveller is going, so the run reads as a ride rather than a map being panned.
+   const heading=at?(90-at.heading*180/Math.PI+360)%360:m.getBearing();
+   const bearing=m.getBearing(),delta=((heading-bearing+540)%360)-180;
+   // Each leg has its own framing, so the zoom has to ease both ways, not only inwards. Bearing is
+   // eased more slowly than position; matching it frame for frame would make the view swim.
+   if(Math.abs(lon-center.lng)+Math.abs(lat-center.lat)>1e-9||Math.abs(pitch-targetPitch)>.01||Math.abs(zoom-targetZoom)>.001||Math.abs(delta)>.05)
+    m.jumpTo({center:[lon,lat],pitch:pitch+(targetPitch-pitch)*blend,zoom:zoom+(targetZoom-zoom)*blend,bearing:bearing+delta*blend*.45});
    frame=requestAnimationFrame(tick);
   };
   frame=requestAnimationFrame(tick);

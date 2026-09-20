@@ -106,3 +106,18 @@ test('the travelled line grows with the run and never runs ahead of it',()=>{
  const full=travelledCoordinates(simulation,1);
  assert.deepEqual(full.at(-1),transitPoint(simulation,1).coordinate);
 });
+
+// The camera turns to face travel. transitPoint gives heading as a maths angle (0 = east,
+// anticlockwise); MapLibre wants a compass bearing (0 = north, clockwise). Getting the conversion
+// wrong points the camera backwards, which is hard to spot and horrible to watch.
+const compass=h=>(90-h*180/Math.PI+360)%360;
+
+test('heading converts to a compass bearing that faces the direction of travel',()=>{
+ const leg=(a,b)=>({id:'x',mode:'walk',line:'',start:null,end:null,minutes:1,coordinates:[a,b],startProgress:0,endProgress:1});
+ const bearingFor=(a,b)=>compass(transitPoint({segments:[leg(a,b)]},.5).heading);
+ const near=(got,want)=>assert.ok(Math.abs(((got-want+540)%360)-180)<1.5,`${got.toFixed(1)} should be about ${want}`);
+ near(bearingFor([127.4,36.3],[127.5,36.3]),90);   // 동쪽
+ near(bearingFor([127.4,36.3],[127.3,36.3]),270);  // 서쪽
+ near(bearingFor([127.4,36.3],[127.4,36.4]),0);    // 북쪽
+ near(bearingFor([127.4,36.3],[127.4,36.2]),180);  // 남쪽
+});
