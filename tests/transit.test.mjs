@@ -16,3 +16,26 @@ test('account-level failures arrive as an array and are named, not blamed on the
  try{normalizePaths({error:{code:'-98'}});assert.fail('should throw');}
  catch(e){assert.equal(e.code,'-98');assert.match(e.message,/찾지 못/);}
 });
+
+test('a repeated search spends one upstream call, and a failure is never remembered',async()=>{
+ let calls=0;
+ const env={ODSAY_API_KEY:'test'};
+ const ok=async()=>{calls++;return Response.json({result:{path:[{info:{totalTime:30,totalWalk:400,payment:1500,mapObj:'0:0@1:2:1:3'},subPath:[{trafficType:3,sectionTime:5,distance:400}]}]}});};
+ const here={from:[127.4340001,36.3320001],to:[127.3849,36.3504],mode:'all'};
+ assert.equal((await handleTransit(req('routes',here),env,ok)).status,200);
+ assert.equal((await handleTransit(req('routes',here),env,ok)).status,200);
+ assert.equal(calls,1,'the second identical search is answered from memory');
+
+ // A different destination is a different question and must go upstream.
+ await handleTransit(req('routes',{...here,to:[127.39,36.36]}),env,ok);
+ assert.equal(calls,2);
+
+ let quotaCalls=0;
+ const quota=async()=>{quotaCalls++;return Response.json({error:[{code:'429',message:'Daily quota exceeded'}]});};
+ const other={from:[127.44,36.34],to:[127.40,36.36],mode:'all'};
+ const first=await handleTransit(req('routes',other),env,quota);
+ assert.equal(first.status,429);
+ const second=await handleTransit(req('routes',other),env,quota);
+ assert.equal(second.status,429);
+ assert.equal(quotaCalls,2,'a quota answer is not cached as if it were this route');
+});

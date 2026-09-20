@@ -31,6 +31,21 @@ export const fieldLabels:Record<string,string>={
 // A KTO content type maps onto the categories the map already draws with.
 const CATEGORY:Record<string,string>={'12':'attraction','14':'culture','15':'culture','28':'attraction','32':'public','38':'shopping','39':'food'};
 
+// The Tourism Organization records nearby transit as free text, e.g.
+// "대중교통 이용가능 : 스마트뷰아파트 정류장\n저상버스 운행 : 201, 501, 611, 615, 701번".
+// Only the numbers on a line that actually says 저상 are low-floor routes; the other lines list
+// ordinary buses, and treating those as accessible would be inventing the fact.
+export function lowFloorBuses(place:TourPlace):string[]{
+ const text=place.barrierFree?.getIn?.publicTransport;
+ if(!text)return [];
+ const found=new Set<string>();
+ for(const line of text.split('\n')){
+  if(!/저상/.test(line))continue;
+  for(const m of line.matchAll(/\d{1,4}(?:-\d)?/g))found.add(m[0]);
+ }
+ return [...found];
+}
+
 export function entries(section:BarrierFreeSection){
  return section?Object.entries(section).filter(([,v])=>v):[];
 }
