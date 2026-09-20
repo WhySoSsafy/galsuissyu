@@ -12,7 +12,7 @@
    active destination is a filled chip instead of a tinted panel. */
 .dj-mobile-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;position:absolute;bottom:calc(8px + env(safe-area-inset-bottom,0px));left:10px;right:10px;z-index:12;height:60px;padding:5px;background:#ffffffee;backdrop-filter:blur(14px);border:1px solid #e4e9ec;border-radius:18px;box-shadow:0 6px 26px #1d354522}
  .dj-mobile-nav button{display:flex;align-items:center;justify-content:center;gap:2px;flex-direction:column;min-height:50px;border-radius:13px;font-size:11px;font-weight:600;color:#7b8892;background:transparent;border:0;transition:background .16s ease,color .16s ease}
- .dj-mobile-nav button>span{font-size:19px;line-height:21px}.dj-mobile-nav button[aria-current=page]{color:#fff;background:#28485b}
+ .dj-mobile-nav button>svg{width:21px;height:21px;flex-shrink:0}.dj-mobile-nav button[aria-current=page]{color:#fff;background:#28485b}
  .dj-map-top{top:calc(72px + env(safe-area-inset-top,0px));left:12px;right:12px;gap:8px}
  .dj-districts{display:none}.dj-mobile-region{display:block;position:absolute;left:0;top:0;width:108px;min-height:38px;padding:7px;border:1px solid #d5e2dc;border-radius:10px;background:white;color:#226747;font-size:14px}.dj-pilot-shortcut{font-size:14px!important;min-height:38px;padding:7px 12px;max-width:calc(100% - 116px);margin-left:116px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;background:#fff;color:#226747;border-color:#d5e2dc}
  .dj-categories{flex-wrap:nowrap;overflow-x:auto;max-width:100%;max-height:none;width:100%;padding-bottom:5px;scrollbar-width:none}
@@ -54,7 +54,7 @@
 @media(max-width:740px){
  .daejeon-app{--nav-height:calc(76px + env(safe-area-inset-bottom,0px));--search-bottom:calc(66px + env(safe-area-inset-top,0px))}
  .dj-mobile-search{top:calc(8px + env(safe-area-inset-top,0px));height:48px;padding:0 2px;border-radius:12px}.dj-mobile-search input{height:44px}.dj-mobile-search button{width:44px;height:44px}
- .dj-mobile-nav button{min-height:46px;font-size:11px;gap:2px}.dj-mobile-nav button>span{font-size:18px;line-height:20px}
+ .dj-mobile-nav button{min-height:46px;font-size:11px;gap:2px}.dj-mobile-nav button>svg{width:20px;height:20px}
  .dj-map-top,.dj-pilot-loading.is-routine{display:none}
  .dj-map-controls{top:var(--search-bottom);right:12px;display:block;border-radius:12px;overflow:hidden}.dj-map-controls button{display:none}.dj-map-controls button:last-child{display:block;width:44px;height:44px;border:0;font-size:25px}
  .dj-panel,.dj-panel.expanded{bottom:calc(var(--nav-height) + 8px);left:10px;right:10px;height:82px;max-height:calc(100% - var(--search-bottom) - var(--nav-height) - 16px);border-radius:16px;box-shadow:0 3px 22px #1d354524}
