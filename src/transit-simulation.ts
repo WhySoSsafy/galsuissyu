@@ -51,6 +51,25 @@ export function walkLegEndpoints(simulation:TransitSimulation){
  return simulation.segments.filter(s=>s.mode==='walk').map(s=>({from:s.coordinates[0],to:s.coordinates.at(-1)!}));
 }
 
+// The path already covered, so the map can show progress the way the walking mode does instead of
+// leaving one flat line for the whole trip.
+export function travelledCoordinates(simulation:TransitSimulation,progress:number):Coordinate[]{
+ const point=transitPoint(simulation,progress);
+ const out:Coordinate[]=[];
+ for(const segment of simulation.segments){
+  if(segment.startProgress>=point.segment.startProgress&&segment!==point.segment)break;
+  if(segment!==point.segment){out.push(...segment.coordinates);continue;}
+  // Walk into the active leg only as far as the traveller has actually gone.
+  const lengths=[0];
+  for(let i=1;i<segment.coordinates.length;i++)lengths.push(lengths[i-1]+distance(segment.coordinates[i-1],segment.coordinates[i]));
+  const target=point.pathProgress*(lengths.at(-1)||0);
+  for(let i=0;i<segment.coordinates.length&&lengths[i]<=target;i++)out.push(segment.coordinates[i]);
+  out.push(point.coordinate);
+  break;
+ }
+ return out.length>1?out:[];
+}
+
 export function legSpan(start:string|null,end:string|null){
  if(!start||!end)return '구간 정보 미확인';
  return start===end?`${start} 안에서 이동`:`${start} → ${end}`;

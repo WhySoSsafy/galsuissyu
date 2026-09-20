@@ -13,7 +13,7 @@ import {chooseMapPins} from './map-pins';
 import {bridgeLayers} from './bridge-style';
 import {loadMapContext} from './map-context';
 import type {TransitSimulation} from './transit-types';
-import {transitPoint,transitStatus} from './transit-simulation';
+import {transitPoint,transitStatus,travelledCoordinates} from './transit-simulation';
 type Props={transitGeometry:GeoJSON.FeatureCollection<GeoJSON.LineString>|null;transitSimulation:TransitSimulation|null;transitPlaying:boolean;transitProgress:number;focusedPins:boolean;onEndpoint:(c:Coordinate,kind:'from'|'to')=>void;terrainStrength:number;onPilotState:(state:PilotLoadState)=>void;onPilotPick:(id:string)=>void;places:CityPlace[];selected:string;from:CityPlace|null;to:CityPlace|null;route:RouteResult|null;preview:boolean;progress:number;follow:boolean;wheelchair:boolean;onFollowChange:(v:boolean)=>void;onPick:(p:CityPlace)=>void;onPoint:(p:Coordinate)=>void;onDetail:(n:number)=>void;onZoom:(n:number)=>void;onCompatibility:(v:boolean)=>void};
 export const DaejeonMap=forwardRef<CityViewHandle,Props>(function DaejeonMap(props,ref){
  const el=useRef<HTMLDivElement>(null),map=useRef<MapLibreMap|null>(null),fallback=useRef<CityViewHandle>(null),latest=useRef(props);latest.current=props;
@@ -74,10 +74,19 @@ export const DaejeonMap=forwardRef<CityViewHandle,Props>(function DaejeonMap(pro
    }
   }refresh();m.on('moveend',refresh);return()=>{m.off('moveend',refresh);markers.current.forEach(x=>x.remove());};
  },[ready,props.places,props.selected,props.from,props.to,props.focusedPins,props.route,props.transitSimulation,props.follow,compat]);
- useEffect(()=>{if(!ready||!map.current||compat)return;const m=map.current;const data=props.transitGeometry??{type:'FeatureCollection',features:[]};if(!m.getSource('transit-route')){m.addSource('transit-route',{type:'geojson',data});m.addLayer({id:'transit-route-halo',source:'transit-route',type:'line',paint:{'line-color':'#fff','line-width':9}});m.addLayer({id:'transit-route-lines',source:'transit-route',type:'line',filter:['!=',['get','mode'],'walk'],paint:{'line-color':['match',['get','mode'],'subway','#7855b7','#267ba3'],'line-width':5},layout:{'line-cap':'round','line-join':'round'}});m.addLayer({id:'transit-walk-lines',source:'transit-route',type:'line',filter:['==',['get','mode'],'walk'],paint:{'line-color':'#a66a55','line-width':4,'line-dasharray':[2,2]},layout:{'line-cap':'round','line-join':'round'}});}else (m.getSource('transit-route') as GeoJSONSource).setData(data);},[ready,compat,props.transitGeometry]);
+ useEffect(()=>{if(!ready||!map.current||compat)return;const m=map.current;const data=props.transitGeometry??{type:'FeatureCollection',features:[]};if(!m.getSource('transit-route')){m.addSource('transit-route',{type:'geojson',data});m.addLayer({id:'transit-route-halo',source:'transit-route',type:'line',paint:{'line-color':'#fff','line-width':9}});m.addLayer({id:'transit-route-lines',source:'transit-route',type:'line',filter:['!=',['get','mode'],'walk'],paint:{'line-color':['match',['get','mode'],'subway','#7855b7','#267ba3'],'line-width':5},layout:{'line-cap':'round','line-join':'round'}});m.addLayer({id:'transit-walk-lines',source:'transit-route',type:'line',filter:['==',['get','mode'],'walk'],paint:{'line-color':'#a66a55','line-width':4,'line-dasharray':[2,2]},layout:{'line-cap':'round','line-join':'round'}});
+ // Ground already covered, drawn over the plan so the run reads as progress rather than a static line.
+ m.addSource('transit-progress',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+ m.addLayer({id:'transit-progress-line',source:'transit-progress',type:'line',paint:{'line-color':'#ce6b51','line-width':6,'line-opacity':.95},layout:{'line-cap':'round','line-join':'round'}});}else (m.getSource('transit-route') as GeoJSONSource).setData(data);},[ready,compat,props.transitGeometry]);
  useEffect(()=>{if(!ready||!map.current||compat)return;selection.current.forEach(m=>m.remove());selection.current=[];for(const [p,label,color] of [[props.from,'출발','#28485b'],[props.to,'도착','#ce6b51']] as const){if(!p)continue;const b=document.createElement('button');b.className='endpoint-pin';b.style.background=color;b.textContent=label;b.setAttribute('aria-label',label+' '+p.name);b.onclick=e=>{e.stopPropagation();latest.current.onPick(p);};selection.current.push(new Marker({element:b,anchor:'bottom'}).setLngLat(placeCoordinate(p)).addTo(map.current));}},[ready,props.from,props.to,compat]);
  useEffect(()=>{if(!ready||!map.current||compat)return;const source=map.current.getSource('journey') as GeoJSONSource|undefined;if(!source)return;const features:GeoJSON.Feature[]=[];if(props.route){if(props.route.elevation?.segments.length){for(const s of props.route.elevation.segments)features.push({type:'Feature',properties:{part:'path',slope:s.kind},geometry:{type:'LineString',coordinates:s.coordinates}});}else features.push({type:'Feature',properties:{part:'path'},geometry:{type:'LineString',coordinates:props.route.coordinates}});for(const c of props.route.connectors)features.push({type:'Feature',properties:{part:'connection'},geometry:{type:'LineString',coordinates:c}});}source.setData({type:'FeatureCollection',features});if(!props.route)(map.current.getSource('journey-progress') as GeoJSONSource|undefined)?.setData({type:'FeatureCollection',features:[]});},[ready,props.route,compat]);
  useEffect(()=>{if(!ready||compat||!map.current)return;try{map.current.setTerrain(props.terrainStrength>0?{source:'terrain-dem',exaggeration:props.terrainStrength}:null);}catch{map.current.setTerrain(null);setError('입체 지형을 준비하지 못해 평면 지형으로 표시해요.');}},[ready,compat,props.terrainStrength]);
+ useEffect(()=>{
+  if(!ready||compat||!map.current)return;
+  const source=map.current.getSource('transit-progress') as GeoJSONSource|undefined;if(!source)return;
+  const coordinates=props.transitSimulation?travelledCoordinates(props.transitSimulation,props.transitProgress):[];
+  source.setData(coordinates.length>1?{type:'Feature',properties:{},geometry:{type:'LineString',coordinates}}:{type:'FeatureCollection',features:[]});
+ },[ready,compat,props.transitSimulation,props.transitProgress]);
  useEffect(()=>{map.current?.triggerRepaint();},[props.preview,props.progress,props.route,props.selected,props.transitPlaying,props.transitProgress,props.transitSimulation]);
   // The leg label stays pinned to the viewport. Chasing the model made the text shake with the camera.
  const transitBanner=useMemo(()=>{
@@ -130,9 +139,12 @@ export const DaejeonMap=forwardRef<CityViewHandle,Props>(function DaejeonMap(pro
    const dt=Math.min(.05,Math.max(0,(now-previous)/1000));previous=now;
    const center=m.getCenter(),blend=reduced()?1:1-Math.exp(-dt*8);
    const lon=center.lng+(coordinate[0]-center.lng)*blend,lat=center.lat+(coordinate[1]-center.lat)*blend;
-   const targetZoom=s.transitSimulation?16.8:17,zoom=m.getZoom(),pitch=m.getPitch();
-   if(Math.abs(lon-center.lng)+Math.abs(lat-center.lat)>1e-9||pitch<54.99||zoom<targetZoom-.001)
-    m.jumpTo({center:[lon,lat],pitch:pitch+(55-pitch)*blend,zoom:zoom<targetZoom?zoom+(targetZoom-zoom)*blend:zoom});
+   const leg=s.transitSimulation?transitPoint(s.transitSimulation,s.transitProgress).segment.mode:null;
+   // A train covers ground fast and deserves room; a walk is where the kerbs matter.
+   const targetZoom=leg==='subway'?16.1:leg==='bus'?16.6:leg==='walk'?17.3:17,zoom=m.getZoom(),pitch=m.getPitch();
+   // Each leg has its own framing, so the zoom has to ease both ways, not only inwards.
+   if(Math.abs(lon-center.lng)+Math.abs(lat-center.lat)>1e-9||pitch<54.99||Math.abs(zoom-targetZoom)>.001)
+    m.jumpTo({center:[lon,lat],pitch:pitch+(55-pitch)*blend,zoom:zoom+(targetZoom-zoom)*blend});
    frame=requestAnimationFrame(tick);
   };
   frame=requestAnimationFrame(tick);

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {build} from 'esbuild';
 const bundled=await build({entryPoints:['src/transit-simulation.ts'],bundle:true,write:false,format:'esm',platform:'node'});
-const {transitPoint,transitStatus,nameWalkLegs,legSpan,withWalkPaths,walkLegEndpoints}=await import('data:text/javascript;base64,'+Buffer.from(bundled.outputFiles[0].text).toString('base64'));
+const {transitPoint,transitStatus,nameWalkLegs,legSpan,withWalkPaths,walkLegEndpoints,travelledCoordinates}=await import('data:text/javascript;base64,'+Buffer.from(bundled.outputFiles[0].text).toString('base64'));
 const bus={id:'b',mode:'bus',line:'101',start:'A',end:'B',minutes:10,coordinates:[[127.38,36.35],[127.39,36.35]],startProgress:0,endProgress:.5};
 const train={...bus,id:'t',mode:'subway',line:'1호선',startProgress:.5,endProgress:1,coordinates:[[127.39,36.35],[127.4,36.35]]};
 const simulation={segments:[bus,train]};
@@ -93,4 +93,16 @@ test('walk legs take the real footpath and the run is re-timed around it',()=>{
 test('nothing changes when the walking network answers with nothing usable',()=>{
  assert.equal(withWalkPaths(walkSim,[null,null]),walkSim);
  assert.equal(withWalkPaths(walkSim,[[[127.43,36.33]],null]),walkSim,'a single point is not a path');
+});
+
+test('the travelled line grows with the run and never runs ahead of it',()=>{
+ const start=travelledCoordinates(simulation,0);
+ assert.ok(start.length===0||start.length===2,'nothing meaningful is drawn at the start');
+ const mid=travelledCoordinates(simulation,.5);
+ const late=travelledCoordinates(simulation,.9);
+ assert.ok(late.length>=mid.length,'the line only grows');
+ const here=transitPoint(simulation,.9).coordinate;
+ assert.deepEqual(late.at(-1),here,'it ends exactly where the traveller is');
+ const full=travelledCoordinates(simulation,1);
+ assert.deepEqual(full.at(-1),transitPoint(simulation,1).coordinate);
 });

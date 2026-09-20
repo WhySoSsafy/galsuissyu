@@ -62,6 +62,8 @@ export function hasAnyFor(place:TourPlace,list:Companion[]){
 // wheelchair stays 'unknown' unless the provider actually describes step-free entry: the barrier-free
 // text is an accessibility description, not a yes/no field, so reading a verdict out of it would be
 // inventing one.
+const secure=(url:string)=>url?url.replace(/^http:\/\//,'https://'):undefined;
+
 export function toCityPlace(p:TourPlace):CityPlace|null{
  if(p.lon===null||p.lat===null)return null;
  const access=p.barrierFree;
@@ -85,6 +87,8 @@ export function toCityPlace(p:TourPlace):CityPlace|null{
   facilities:[],
   verified:!!access,
   accessNotes:notes,
-  image:p.image||p.thumbnail||undefined,
+  // The provider hands these out over http; a page served over https would refuse to load them.
+  image:secure(p.image||p.thumbnail),
+  thumbnail:secure(p.thumbnail||p.image),
  };
 }
