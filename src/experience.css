@@ -32,7 +32,7 @@
 .tour-access-group h4 em{font-style:normal;font-size:11px;font-weight:600;color:#3f7a5f;background:#e8f4ed;border-radius:5px;padding:3px 6px}
 .tour-access-group dl{margin:0;display:grid;gap:8px}
 .tour-access-group dl>div{display:grid;grid-template-columns:82px minmax(0,1fr);gap:10px}
-.tour-access-group dt{font-size:12px;color:#7d8c84}
+.tour-access-group dt{font-size:12px;color:#68766e}
 .tour-access-group dd{margin:0;font-size:13px;line-height:1.65;color:#41544b;word-break:keep-all}
 .tour-access-group dd span{display:block}
 .tour-access-note{font-size:12px!important;line-height:1.75!important;color:#7c8a83!important;margin-top:12px}
@@ -70,7 +70,8 @@
 .dj-detail-actions{flex-wrap:wrap}
 .dj-detail-actions button{flex:1;min-height:44px;font-size:14px}
 
-.dj-detail-actions .is-end,.dj-row-actions .is-end{background:#ce6b51;border-color:#ce6b51;color:#fff}
+/* White on #ce6b51 is 3.59:1; small text needs 4.5. This step keeps the hue and clears it. */
+.dj-detail-actions .is-end,.dj-row-actions .is-end{background:#b85735;border-color:#b85735;color:#fff}
 /* The 3D run is a different kind of action from picking an end, so it does not wear either end's
    colour; it is the wide outlined one underneath them. */
 .dj-detail-actions .is-sim{flex-basis:100%;margin-top:4px;background:#f2f5f7;border-color:#cfdae1;color:#2c4557}
@@ -217,3 +218,9 @@
 .intro-actions.is-ready{animation:intro-rise .4s}
 @media(max-width:740px){.intro-line-a{font-size:26px}.intro-line-b{font-size:34px}.intro-words{inset:auto 0 44% 0}.intro-pitch{font-size:13px}}
 @media(prefers-reduced-motion:reduce){.intro-route,.intro-dot,.intro-words p,.intro-actions.is-ready{animation:none!important;opacity:1;stroke-dashoffset:0}}
+.skip-link{position:absolute;z-index:300;left:12px;top:-60px;padding:12px 18px;background:#28485b;color:#fff;border-radius:0 0 12px 12px;font-size:14px;font-weight:700;text-decoration:none;transition:top .15s ease}
+.skip-link:focus{top:0}
+.dj-brand-heading{margin:0;font-size:inherit;font-weight:inherit;line-height:inherit;display:contents}
+.dj-map-stage:focus{outline:none}
+/* 44px is the smallest target that is reliably hittable; the endpoint pair was 40. */
+.dj-detail-actions button,.dj-row-actions button{min-height:44px}

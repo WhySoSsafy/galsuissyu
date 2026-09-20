@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
 const SLATE = '#28485b';
-const TERRACOTTA = '#ce6b51';
+const TERRACOTTA = '#b85735';  // white text on this clears 4.5:1; #ce6b51 did not
 
 const experience = readFileSync('src/experience.css', 'utf8');
 const mobile = readFileSync('src/mobile-map.css', 'utf8');
