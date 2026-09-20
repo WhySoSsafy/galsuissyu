@@ -25,6 +25,15 @@ import {enrichPilotPlaces,getPilotPlace,pilotAssetForPlace,pilotStops,type Pilot
 import type {PilotLoadState} from './pilot-models';
 import {AccessDetails,RouteDetails,TravelDestinations} from './TravelDetails';
 
+// The film has an address of its own: /intro, or ?intro for anywhere that cannot rewrite paths.
+// Without one there was no way to reach it again except clearing storage, and a refresh always
+// landed on the map.
+const atIntroAddress=()=>location.pathname.replace(/\/+$/,'')==='/intro'||new URLSearchParams(location.search).has('intro');
+const introWanted=()=>{
+ if(atIntroAddress())return true;
+ try{return !localStorage.getItem('galsuissyu-intro-seen');}catch{return true;}
+};
+
 const initialPrefs:Mobility={wheelchair:true,steps:true,rough:false,steep:true,rest:false};
 const preferenceLabels:[keyof Mobility,string,string][]=[['wheelchair','휠체어·유아차 이용','휠체어 불가로 기록된 길 제외'],['steps','계단 피하기','계단으로 기록된 구간 제외'],['steep','가파른 경사 피하기','기록된 경사 5% 초과 구간 제외'],['rough','거친 노면 피하기','자갈·흙·모래 등으로 기록된 길 제외'],['rest','휴식 장소 함께 보기','도착지 주변 공원·쉼터 정보 표시']];
 const normalize=(v:string)=>v.replace(/\s/g,'').toLowerCase();
@@ -74,7 +83,7 @@ export default function CityExplorer({onLegacy,onPilotAssets,initialPilot,onStat
  const pending=useRef(new Map<string,(paths:(Coordinate[]|null)[]|null)=>void>());
  const [data,setData]=useState<CityData|null>(null),[tour,setTour]=useState<TourSnapshot|null>(null),[dataError,setDataError]=useState(false),[query,setQuery]=useState(''),[category,setCategory]=useState('all'),[district,setDistrict]=useState('전체'),[limit,setLimit]=useState(24);
  const [selected,setSelected]=useState<CityPlace|null>(null),[from,setFrom]=useState<CityPlace|null>(null),[to,setTo]=useState<CityPlace|null>(null),[picking,setPicking]=useState<'from'|'to'|null>(null),[prefs,setPrefs]=useState<Mobility>(initialPrefs);
- const [survey,setSurvey]=useState(false),[route,setRoute]=useState<RouteResult|null>(null),[routing,setRouting]=useState(false),[routeError,setRouteError]=useState(''),[detailCount,setDetailCount]=useState(0),[zoom,setZoom]=useState(16.6),[compat,setCompat]=useState(false),[notice,setNotice]=useState(''),[preview,setPreview]=useState(false),[chipsOpen,setChipsOpen]=useState(false),[startedSimulation,setStartedSimulation]=useState<unknown>(null),[wantSurvey,setWantSurvey]=useState(false),[autoRun,setAutoRun]=useState(0),[companion,setCompanion]=useState<Companion[]>([]),[panelMode,setPanelMode]=useState<'search'|'route'>('search'),[intro,setIntro]=useState(()=>{try{return !localStorage.getItem('galsuissyu-intro-seen');}catch{return true;}});
+ const [survey,setSurvey]=useState(false),[route,setRoute]=useState<RouteResult|null>(null),[routing,setRouting]=useState(false),[routeError,setRouteError]=useState(''),[detailCount,setDetailCount]=useState(0),[zoom,setZoom]=useState(16.6),[compat,setCompat]=useState(false),[notice,setNotice]=useState(''),[preview,setPreview]=useState(false),[chipsOpen,setChipsOpen]=useState(false),[startedSimulation,setStartedSimulation]=useState<unknown>(null),[wantSurvey,setWantSurvey]=useState(false),[autoRun,setAutoRun]=useState(0),[companion,setCompanion]=useState<Companion[]>([]),[panelMode,setPanelMode]=useState<'search'|'route'>('search'),[intro,setIntro]=useState(introWanted),[showcase,setShowcase]=useState(false);
  useEffect(()=>{let stopped=false;
  Promise.all([
   fetch('/data/places.json').then(r=>{if(!r.ok)throw Error();return r.json();}),
@@ -110,7 +119,13 @@ export default function CityExplorer({onLegacy,onPilotAssets,initialPilot,onStat
  const tourById=useMemo(()=>new Map((tour?.places??[]).map(p=>['kto-'+p.contentId,p])),[tour]);
  const selectedTour=selected?tourById.get(selected.id)??null:null;
  // Hold the first-visit survey until the places file lands, so its opening step can state real counts.
- useEffect(()=>{if(wantSurvey&&coverage&&!intro){setSurvey(true);setWantSurvey(false);}},[wantSurvey,coverage,intro]);
+ // Back and forward move between the film and the map like any other pair of pages.
+ useEffect(()=>{
+  const onPop=()=>setIntro(atIntroAddress());
+  addEventListener('popstate',onPop);
+  return()=>removeEventListener('popstate',onPop);
+ },[]);
+ useEffect(()=>{if(wantSurvey&&coverage&&!intro&&!showcase){setSurvey(true);setWantSurvey(false);}},[wantSurvey,coverage,intro,showcase]);
  // Whenever the app starts waiting for an endpoint, put the cursor in the box that takes it, so
  // setting one end leaves the other ready to type into.
  useEffect(()=>{if(picking)(window.innerWidth<=740?mobileSearch:search).current?.focus();},[picking]);
@@ -128,12 +143,15 @@ function choose(p:CityPlace){setPreview(false);setFollow(false);setPanelOpen(tru
  function mapEndpoint(c:Coordinate,kind:'from'|'to'){if(!data)return;const district=data.districts.find(d=>insideCity(c,d.geometry));if(!district){setNotice('대전 안에서 위치를 선택해 주세요.');return;}const p:CityPlace={id:`pin-${c[0].toFixed(6)}-${c[1].toFixed(6)}`,name:'지도에서 선택한 '+(kind==='from'?'출발지':'도착지'),lon:c[0],lat:c[1],district:district.name,category:'public',wheelchair:'unknown',toiletWheelchair:'unknown',access:'unknown',hours:'',phone:'',website:'',source:'',address:'',checkedAt:data.collectedAt,facilities:[],verified:false};if(kind==='from')setFrom(p);else setTo(p);setPicking(null);setSelected(null);setPanelOpen(true);setMobileMode('route');setSheetLevel('half');setNotice((kind==='from'?'출발지':'도착지')+'로 설정했어요.');}
  // Reaching the transit simulation takes six deliberate steps, which is five too many for someone
  // meeting the app for the first time. This sets up the same journey and lets it play.
- function runDemo(){
+ function runDemo(focused=false){
   const origin=data?.places.find(p=>p.name==='대전역'),target=data?.places.find(p=>p.name==='한빛탑');
   if(!origin||!target){setNotice('둘러보기 경로를 준비하지 못했어요. 출발지와 도착지를 직접 골라 주세요.');return;}
   setSelected(null);setPicking(null);setQuery('');setChipsOpen(false);
   setFrom(origin);setTo(target);setRoute(null);setPreview(false);
-  setTravelMode('transit');setPanelMode('route');setPanelOpen(true);setMobileMode('route');setSheetLevel('peek');
+  setTravelMode('transit');setPanelMode('route');setMobileMode('route');setSheetLevel('peek');
+  // Coming out of the opening film the run is the whole point, so the panel gets out of the way and
+  // the map has the screen. Everything is still one click away once it has played.
+  setPanelOpen(!focused);setShowcase(focused);setFollow(true);
   setAutoRun(n=>n+1);
  }
  // Lends the walking network to the transit simulation so its walk legs follow real paths. Resolves
@@ -167,16 +185,20 @@ function choose(p:CityPlace){setPreview(false);setFollow(false);setPanelOpen(tru
   setTravelMode('transit');setPanelMode('route');setPanelOpen(true);setMobileMode('route');setSheetLevel('peek');
   setAutoRun(n=>n+1);
  }
- // Dismissing the opening film is remembered, so a return visit lands straight on the map. 마이 can
- // play it again.
- function closeIntro(){setIntro(false);try{localStorage.setItem('galsuissyu-intro-seen','1');}catch{}}
+ // Leaving the film puts the map back in the address bar, so a refresh stays where you are. The
+ // film keeps its own address, which is what makes it shareable and re-openable.
+ function closeIntro(){
+  setIntro(false);
+  try{localStorage.setItem('galsuissyu-intro-seen','1');}catch{}
+  if(atIntroAddress())history.replaceState(null,'','/');
+ }
  function changeDistrict(name:string){setMobileMode('browse');setSheetLevel('peek');setMapMenu(false);setChipsOpen(false);setDistrict(name);setQuery('');setSelected(null);if(name==='전체')view.current?.overview();else view.current?.fly(districtCenters[name],14.3);}
  function beginEndpoint(which:'from'|'to'){setPanelOpen(true);setPicking(which);setSelected(null);setQuery('');setCategory('all');setDistrict('전체');setMobileMode('search');setSheet(true);(window.innerWidth<=740?mobileSearch:search).current?.focus();}
  function calculate(){setTransitGeometry(null);if(!from||!to){setRouteError('출발지와 도착지를 먼저 선택해 주세요.');return;}if(from.id===to.id){setRouteError('출발지와 도착지를 다르게 선택해 주세요.');return;}setRouting(true);setRoute(null);setRouteError('');const id=++request.current;worker.current?.postMessage({id,from:placeCoordinate(from),to:placeCoordinate(to),prefs});}
  function useTransitJourney(simulation:TransitSimulation|null){setTransitSimulation(simulation);setTransitGeometry(simulation?transitSimulationGeoJSON(simulation):null);setTransitProgress(0);setTransitPreview(!!simulation);if(simulation){setRoute(null);setPreview(false);setFollow(true);view.current?.fitRoute(simulation.coordinates);setMobileMode('route');setSheetLevel('peek');}else setTransitPreview(false);}
  function savePrefs(values:Mobility,group:Companion[]){setPrefs(values);setCompanion(group);try{localStorage.setItem('galsuissyu-city-prefs',JSON.stringify({version:1,values,companion:group}));}catch{}setSurvey(false);}
  function locate(){if(!navigator.geolocation){setNotice('현재 위치를 지원하지 않는 브라우저예요.');return;}navigator.geolocation.getCurrentPosition(p=>point([p.coords.longitude,p.coords.latitude],true),()=>setNotice('현재 위치를 가져오지 못했어요. 지도에서 직접 선택할 수 있어요.'),{timeout:10000,maximumAge:60000});}
- return <div className={'daejeon-app mobile-'+mobileMode+' sheet-'+sheetLevel+(panelOpen?'':' panel-collapsed')+(picking?' is-picking':'')}>
+ return <div className={'daejeon-app mobile-'+mobileMode+' sheet-'+sheetLevel+(panelOpen?'':' panel-collapsed')+(picking?' is-picking':'')+(showcase?' is-showcase':'')}>
   <div className="dj-mobile-search"><button aria-label="검색 닫고 지도 보기" onClick={()=>{setMobileMode('browse');setSelected(null);setPicking(null);setQuery('');setSheet(false);mobileSearch.current?.blur();}}>‹</button><input ref={mobileSearch} aria-label="장소 또는 편의시설 검색" placeholder={picking?(picking==='from'?'출발지 검색':'도착지 검색'):'장소·주소·편의시설 검색'} value={query} onFocus={()=>{setSelected(null);setMobileMode('search');setSheet(true);}} onChange={e=>{setQuery(e.target.value);setSelected(null);setMobileMode('search');setSheet(true);}} onKeyDown={e=>{if(e.key==='Enter'){mobileSearch.current?.blur();setSheetLevel('half');}}}/>{query&&<button aria-label="검색어 지우기" onClick={()=>setQuery('')}>×</button>}<button aria-label="지도 설정과 시설 필터" aria-expanded={mapMenu} onClick={()=>setMapMenu(true)}>☷</button></div>
   {/* 116 controls stand between the top of the page and the map, which is a long way to tab for
       someone who cannot use a pointer. */}
@@ -209,20 +231,24 @@ function choose(p:CityPlace){setPreview(false);setFollow(false);setPanelOpen(tru
      {nearby.length>0&&<><h3>주변에서 함께 확인하기</h3>{nearby.map(({p,m})=><button className="dj-nearby" key={p.id} onClick={()=>choose(p)}><span>{categories[p.category].icon}</span><strong>{p.name}<small>{formatDistance(m)} · 직선거리 · 운영 미확인</small></strong><span>↗</span></button>)}</>}
     </article></div></aside>}
    <section id="dj-map-region" tabIndex={-1} className={'dj-map-stage'+(simulationEngaged?' simulation-active':'')+(chipsOpen?' chips-open':'')} aria-label="대전 전역 탐색"><button className="sidebar-toggle" aria-controls="journey-sidebar" aria-expanded={panelOpen} aria-label={panelOpen?'사이드바 접기':'사이드바 펼치기'} onClick={()=>setPanelOpen(!panelOpen)}>{panelOpen?'‹':'›'}</button><DaejeonMap transitGeometry={transitGeometry} transitSimulation={transitSimulation} transitPlaying={transitPreview} transitProgress={transitProgress} focusedPins={!!query.trim()||category!=='all'} onEndpoint={mapEndpoint} terrainStrength={terrainStrength} onPilotState={setPilotState} onPilotPick={id=>{const p=getPilotPlace(data,id);if(p)choose(p);}} ref={view} places={mapPlaces} selected={selected?.id||''} from={from} to={to} route={route} preview={preview} progress={progress} follow={follow} wheelchair={prefs.wheelchair} onFollowChange={setFollow} onPick={choose} onPoint={c=>point(c)} onDetail={setDetailCount} onZoom={setZoom} onCompatibility={setCompat}/>
-    <JourneyArrival arrived={!!((route&&progress>=1)||(transitSimulation&&transitProgress>=1))} destination={to?.name||'목적지'}/>
+    {showcase&&<div className="showcase-exit"><button onClick={()=>{setShowcase(false);setPanelOpen(true);}}>지도 둘러보기 →</button></div>}
+    <JourneyArrival arrived={!!((route&&progress>=1)||(transitSimulation&&transitProgress>=1))} destination={to?.name||'목적지'}
+     onDetails={()=>{setShowcase(false);setPanelOpen(true);setPanelMode('route');setMobileMode('route');setSheetLevel('full');}}
+     onExplore={()=>{setShowcase(false);setPanelOpen(true);setPanelMode('search');setMobileMode('search');setSheetLevel('half');search.current?.focus();}}
+     onReplay={()=>{setTransitProgress(0);setProgress(0);if(transitSimulation)setTransitPreview(true);else setPreview(true);setFollow(true);}}/>
     {route&&!compat&&<JourneyPlayer route={route} playing={preview} progress={progress} speed={speed} follow={follow} onPlaying={setPreview} onSeek={setProgress} onSpeed={setSpeed} onFollow={setFollow} onDetails={()=>{setMobileMode('route');setSheetLevel('full');setPanelOpen(true);setPreview(false);setFollow(false);}}/>}
     {transitSimulation&&!compat&&<TransitJourneyPlayer simulation={transitSimulation} playing={transitPreview} progress={transitProgress} speed={speed} follow={follow} onPlaying={setTransitPreview} onSeek={setTransitProgress} onSpeed={setSpeed} onFollow={setFollow} onDetails={()=>{setMobileMode('route');setSheetLevel('full');setPanelOpen(true);setTransitPreview(false);setFollow(false);}}/>}
     <div className="dj-map-top"><button className="dj-map-top-toggle" aria-expanded={chipsOpen} aria-controls="dj-map-chips" onClick={()=>setChipsOpen(v=>!v)}>지도 옵션 <span aria-hidden="true">{chipsOpen?'⌃':'⌄'}</span></button><div id="dj-map-chips" className="dj-map-chips"><select className="dj-mobile-region" aria-label="대전 지역 선택" value={district} onChange={e=>changeDistrict(e.target.value)}>{['전체','서구','유성구','동구','중구','대덕구'].map(n=><option key={n} value={n}>{n==='전체'?'대전 전체':n}</option>)}</select><button className="dj-pilot-shortcut" disabled={!data} onClick={()=>{setDistrict('전체');setCategory('all');setQuery('');const p=getPilotPlace(data,pilotStops[0].id);if(p)choose(p);}}>대전역–중앙로 3D 시범 구간 ↗</button><div className="dj-districts" aria-label="대전 지역 선택">{['전체','서구','유성구','동구','중구','대덕구'].map(n=><button key={n} aria-pressed={district===n} className={district===n?'active':''} onClick={()=>changeDistrict(n)}>{n==='전체'?'대전 전체':n}</button>)}</div><div className="dj-categories" aria-label="장소 종류">{['all','attraction','culture','park','toilet','elevator','station','food'].map(c=><button key={c} aria-pressed={category===c} className={category===c?'active':''} onClick={()=>{setCategory(c);setSelected(null);setMobileMode('browse');setSheetLevel('peek');setChipsOpen(false);}}>{categories[c].icon} {categories[c].label}</button>)}</div></div></div>
     <div className="dj-map-controls"><button aria-label="지도 확대" onClick={()=>view.current?.zoom(1.5)}>＋</button><button aria-label="지도 축소" onClick={()=>view.current?.zoom(1/1.5)}>−</button><button aria-label="입체와 평면 전환" onClick={()=>view.current?.tilt()} disabled={compat}>3D</button><button aria-label="대전 전체 보기" onClick={()=>{view.current?.overview();setDistrict('전체');}}>⌖</button><button aria-label="내 현재 위치" onClick={locate}>◎</button></div>
     <div className="dj-map-caption"><span className="dj-mode-dot"/><strong>{compat?'대전 · 2D 호환 지도':detailCount?`건축 디테일 ${detailCount}동 표시`:'대전 · 실제 위치 3D 지도'}</strong><small>{compat?'장소 선택과 동선 탐색을 이용할 수 있어요.':zoom<16.2?'가까이 확대하면 창문·수목이 나타나요.':'드래그로 이동 · 오른쪽 드래그로 회전'}</small></div>
     {!compat&&(pilotState.loading>0||!!pilotState.visible||pilotState.failed>0)&&<div className={"dj-pilot-loading "+(pilotState.failed?'is-error':'is-routine')} role="status">{pilotState.loading?'주변 3D 건물을 불러오고 있어요…':pilotState.failed?'일부 3D 건물을 불러오지 못했어요. 기본 지도는 계속 사용할 수 있어요.':`3D 랜드마크 ${pilotState.visible}동 표시 · 나무·차량은 거리 연출이에요.`}</div>}
-        {!route&&!transitSimulation&&<><button className="dj-demo-shortcut" disabled={!data} onClick={runDemo}><b>▶ 대전역 → 한빛탑 3D로 보기</b><small>보행 · 지하철 · 환승 · 버스를 이어서 재생해요</small></button><button className="dj-expo-shortcut" onClick={onStationExperience}>대전역 광장 3D 체험 <span>↗</span></button></>}
+        {!route&&!transitSimulation&&<><button className="dj-demo-shortcut" disabled={!data} onClick={()=>runDemo()}><b>▶ 대전역 → 한빛탑 3D로 보기</b><small>보행 · 지하철 · 환승 · 버스를 이어서 재생해요</small></button><button className="dj-expo-shortcut" onClick={onStationExperience}>대전역 광장 3D 체험 <span>↗</span></button></>}
    </section>
   </main>
   <nav className="dj-mobile-nav" aria-label="주요 기능"><button aria-current={mobileMode==='browse'?'page':undefined} onClick={()=>{setMobileMode('browse');setPanelMode('search');setSelected(null);setPicking(null);setSheet(false);mobileSearch.current?.blur();}}><MapIcon />지도</button><button aria-current={mobileMode==='search'?'page':undefined} onClick={()=>{setSelected(null);setPanelMode('search');setMobileMode('search');setSheet(true);mobileSearch.current?.focus();}}><SearchIcon />검색</button><button aria-current={mobileMode==='route'?'page':undefined} onClick={()=>{setPanelMode('route');setMobileMode('route');setSelected(null);setPicking(null);setSheetLevel(route?'full':'half');mobileSearch.current?.blur();}}><RouteIcon />길찾기</button><button onClick={()=>setSurvey(true)}><PersonIcon />마이</button></nav>
   <Dialog.Root open={mapMenu} onOpenChange={setMapMenu}><Dialog.Portal><Dialog.Overlay className="dj-survey-overlay"/><Dialog.Content className="dj-survey dj-map-menu"><Dialog.Close className="dj-survey-close" aria-label="지도 설정 닫기">×</Dialog.Close><Dialog.Title>지도 설정</Dialog.Title><Dialog.Description>필요한 장소와 지도 도구만 골라보세요.</Dialog.Description><button className="dj-route-button" onClick={()=>{setMapMenu(false);onStationExperience();}}>대전역 광장 3D 체험 →</button><h3>지역</h3><select aria-label="탐색 지역" value={district} onChange={e=>changeDistrict(e.target.value)}>{['전체','서구','유성구','동구','중구','대덕구'].map(n=><option key={n} value={n}>{n==='전체'?'대전 전체':n}</option>)}</select><h3>시설·장소</h3><div className="dj-menu-options">{['all','toilet','elevator','station','park','attraction','culture','food'].map(c=><button key={c} aria-pressed={category===c} onClick={()=>{setCategory(c);setSelected(null);setMobileMode('browse');setSheet(false);setMapMenu(false);}}>{categories[c].icon} {categories[c].label}</button>)}</div><h3>지도 도구</h3><div className="dj-menu-options"><button onClick={()=>view.current?.zoom(1.5)}>확대 ＋</button><button onClick={()=>view.current?.zoom(1/1.5)}>축소 −</button><button disabled={compat} onClick={()=>{view.current?.tilt();setMapMenu(false);}}>2D / 3D 전환</button><button onClick={()=>{view.current?.overview();setMapMenu(false);}}>대전 전체 보기</button></div><button className="dj-route-button" disabled={!data} onClick={()=>{setMapMenu(false);setDistrict('전체');setCategory('all');const p=getPilotPlace(data,pilotStops[0].id);if(p)choose(p);}}>대전역 3D 시범 구간 →</button><fieldset className="terrain-settings" disabled={compat}><legend>지형 높낮이</legend><div>{[[0,"평면"],[1,"기본"],[1.5,"강조"],[2,"더 강조"]].map(([value,label])=><button key={value} aria-pressed={terrainStrength===value} onClick={()=>setTerrainStrength(Number(value))}>{label}</button>)}</div><p>지형 표시 {terrainStrength}배 · 경사 안내 수치는 바뀌지 않아요.</p><button onClick={()=>{setMapMenu(false);view.current?.fly([127.455,36.31],14);}}>식장산 주변 지형 보기 ↗</button></fieldset><button className="dj-model-link" onClick={()=>{setMapMenu(false);onPilotAssets();}}>3D 에셋 살펴보기 ↗</button><p className="dj-quiet">일부 지역은 건물 자료가 빠져 있어요. 빈 공간이 실제 공터라는 뜻은 아니에요. 다리의 폭·난간, 창문·나무·차량은 일부 재구성이며, 통행 가능 여부를 뜻하지 않아요.</p></Dialog.Content></Dialog.Portal></Dialog.Root>
-  {intro&&<IntroCurtain onExplore={closeIntro} onSimulate={()=>{closeIntro();runDemo();}}/>}
-  <MobilitySurvey open={survey} onOpenChange={setSurvey} value={prefs} onSave={savePrefs} coverage={coverage} companion={companion} tour={tour?.counts??null} onReplayIntro={()=>{setSurvey(false);try{localStorage.removeItem('galsuissyu-intro-seen');}catch{}setIntro(true);}}/>
+  {intro&&<IntroCurtain onExplore={closeIntro} onSimulate={()=>{closeIntro();runDemo(true);}}/>}
+  <MobilitySurvey open={survey} onOpenChange={setSurvey} value={prefs} onSave={savePrefs} coverage={coverage} companion={companion} tour={tour?.counts??null} onReplayIntro={()=>{setSurvey(false);history.pushState(null,'','/intro');setIntro(true);}}/>
   {notice&&<div className="dj-toast" role="status">{notice}</div>}
  </div>;
 }

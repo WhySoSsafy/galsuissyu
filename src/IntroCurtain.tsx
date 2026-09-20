@@ -10,18 +10,59 @@ import {useEffect,useRef,useState} from 'react';
 const VIDEO='/assets/intro.mp4';
 const POSTER='/assets/intro-poster.jpg';
 
+// The film plays muted, so these carry it. Each line is timed to what is on screen:
+//   0.0  four of them set out together — grandmother with a cane, a stroller
+//   2.4  they reach a flight of steps and stop; the father looks back
+//   4.6  the map takes over. a route draws itself, the steps marked with a no-entry sign
+//   7.4  they arrive at 한빛탑 together, past a low-floor bus and a lift
+// One story in four lines: they set out together, one of them cannot get past, so none of them go —
+// and then a route she can take turns that around. The closing line is not a full stop; it hands
+// over to the name, which answers it.
+const CAPTIONS=[
+ {at:0.2,until:2.4,line:'오늘은 할머니도 함께 가기로 했어요'},
+ {at:2.6,until:4.4,line:'계단 하나에, 넷 모두가 멈춰 섰습니다'},
+ {at:4.8,until:7.2,line:'할머니가 갈 수 있는 길을 찾았습니다'},
+ {at:7.4,until:10,line:'그래서 오늘, 넷 다 한빛탑까지'},
+];
+
 export function IntroCurtain({onExplore,onSimulate}:{onExplore:()=>void;onSimulate:()=>void}){
  const [hasFilm,setHasFilm]=useState(true);
  const [done,setDone]=useState(false);
+ const [at,setAt]=useState(0);
  const video=useRef<HTMLVideoElement>(null);
  const reduced=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 
  useEffect(()=>{
-  // Nothing at that path yet, or a browser that refuses to play it: fall through to the placeholder.
   const el=video.current;
   if(!el){setHasFilm(false);return;}
-  el.play().catch(()=>setHasFilm(false));
+  // A refused play() is not a missing film. A tab opened in the background refuses it every time,
+  // and treating that as failure swapped the film for the placeholder on exactly the visit most
+  // likely to matter. Only a real media error gives up, via onError; this just tries again when the
+  // tab is actually being looked at.
+  const start=()=>{el.play().catch(()=>{});};
+  start();
+  const onVisible=()=>{if(document.visibilityState==='visible'&&el.paused&&!el.ended)start();};
+  document.addEventListener('visibilitychange',onVisible);
+  return()=>document.removeEventListener('visibilitychange',onVisible);
  },[]);
+ useEffect(()=>{
+  if(!done)return;
+  try{
+   const Ctx=window.AudioContext??(window as unknown as {webkitAudioContext?:typeof AudioContext}).webkitAudioContext;
+   if(!Ctx)return;
+   const ctx=new Ctx();
+   if(ctx.state!=='running'){ctx.close();return;}
+   const gain=ctx.createGain();gain.connect(ctx.destination);
+   gain.gain.setValueAtTime(0.0001,ctx.currentTime);
+   gain.gain.exponentialRampToValueAtTime(0.09,ctx.currentTime+0.04);
+   gain.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.7);
+   for(const [note,delay] of [[659.25,0],[880,0.09]] as const){
+    const osc=ctx.createOscillator();osc.type='sine';osc.frequency.value=note;
+    osc.connect(gain);osc.start(ctx.currentTime+delay);osc.stop(ctx.currentTime+0.75);
+   }
+   setTimeout(()=>ctx.close(),1200);
+  }catch{/* a page that has not been touched is not allowed to make noise; that is fine */}
+ },[done]);
  // The placeholder runs on a timer rather than a video's own end event.
  useEffect(()=>{
   if(hasFilm)return;
@@ -31,8 +72,10 @@ export function IntroCurtain({onExplore,onSimulate}:{onExplore:()=>void;onSimula
  },[hasFilm,reduced]);
 
  return <div className="intro-curtain" role="dialog" aria-modal="true" aria-label="갈수있슈 소개">
-  {hasFilm&&<video ref={video} className="intro-film" src={VIDEO} poster={POSTER} muted playsInline autoPlay
-   onEnded={()=>setDone(true)} onError={()=>setHasFilm(false)}/>}
+  {hasFilm&&<><video ref={video} className="intro-film" src={VIDEO} poster={POSTER} muted playsInline autoPlay
+   onTimeUpdate={e=>setAt(e.currentTarget.currentTime)}
+   onEnded={e=>{e.currentTarget.pause();setDone(true);}} onError={()=>setHasFilm(false)}/>
+   <p className="intro-caption" aria-live="polite">{CAPTIONS.find(c=>at>=c.at&&at<c.until)?.line??''}</p></>}
   {!hasFilm&&<div className={'intro-stage'+(reduced?' is-still':'')} aria-hidden="true">
    <svg viewBox="0 0 900 520" preserveAspectRatio="xMidYMid slice">
     <defs>
@@ -59,10 +102,17 @@ export function IntroCurtain({onExplore,onSimulate}:{onExplore:()=>void;onSimula
    </div>
   </div>}
 
+  {/* The last frame stays and darkens rather than cutting to black, and the name resolves out of
+      it — so the film does not stop, it arrives somewhere. */}
+  {done&&<><div className="intro-dim"/>
+  <div className="intro-finale">
+   <strong className="intro-wordmark">갈수있슈</strong>
+   <p className="intro-tagline">한 사람이 갈 수 있으면, 온 가족이 갑니다</p>
+   <span className="intro-rule"/>
+  </div></>}
   <div className={'intro-actions'+(done?' is-ready':'')}>
    {done
-    ?<><p className="intro-pitch">대전역에서 한빛탑까지, 보행과 지하철과 환승과 버스를 이어서 3D로 먼저 가봅니다.</p>
-      <button className="intro-primary" onClick={onSimulate}>▶ 3D 시뮬레이션 보기</button>
+    ?<><button className="intro-primary" onClick={onSimulate}>▶ 3D 시뮬레이션 보기</button>
       <button className="intro-secondary" onClick={onExplore}>지도부터 둘러볼게요</button></>
     :<button className="intro-skip" onClick={()=>setDone(true)}>건너뛰기</button>}
   </div>

@@ -20,7 +20,9 @@ export type AccessCoverage={places:number;documented:number;toilets:number;toile
 // The pitch for this app is a measurement, not an adjective: count how little of Daejeon's
 // accessibility is actually written down, straight from the dataset we ship.
 export function accessCoverage(data:CityData):AccessCoverage{
- const places=data.places;
+ // Bus stops joined the map so a journey can start at one, but they are not places anyone sets out
+ // to visit, and counting them made the headline read 4,256 instead of the places it is about.
+ const places=data.places.filter(p=>!p.id.startsWith('bus-'));
  const toilets=places.filter(p=>p.category==='toilet');
  return {
   places:places.length,
