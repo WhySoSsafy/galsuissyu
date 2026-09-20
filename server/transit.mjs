@@ -42,7 +42,20 @@ export async function handleTransit(request,env={},fetcher=fetch){
  const headers={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'};
  const respond=(body,status=200)=>new Response(JSON.stringify(body),{status,headers});
  const url=new URL(request.url);
- if(url.pathname==='/api/transit/status')return respond({configured:!!env.ODSAY_API_KEY});
+ // What the running deployment is actually set to. Vercel keeps environment variables on the
+ // deployment, so an edit in the dashboard reaches nothing until a redeploy — and a key with the
+ // wrong domain registered fails exactly like a wrong key. Neither is visible from the outside,
+ // which left both as guesses. The domain is not a secret; the key is reported only as its length
+ // and a short digest, which is enough to tell one key from another and useless for calling ODsay.
+ if(url.pathname==='/api/transit/status'){
+  const key=env.ODSAY_API_KEY||'';
+  const digest=key?[...key].reduce((h,c)=>(h*31+c.charCodeAt(0))>>>0,7).toString(36).slice(0,6):null;
+  return respond({
+   configured:!!key,
+   serviceUri:env.ODSAY_SERVICE_URI||null,
+   key:key?{length:key.length,digest}:null,
+  });
+ }
  if(request.method!=='POST')return respond({error:'POST 요청만 지원해요.'},405);
  if(!env.ODSAY_API_KEY)return respond({code:'NOT_CONFIGURED',error:'대중교통 정보를 연결 준비 중이에요. 현재 보행 경로를 이용할 수 있어요.'},503);
  try{

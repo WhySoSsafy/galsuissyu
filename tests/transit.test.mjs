@@ -1,6 +1,18 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {handleTransit,normalizePaths} from '../server/transit.mjs';
+import test from 'node:test';import assert from 'node:assert/strict';import {handleTransit,normalizePaths} from '../server/transit.mjs';import {readFileSync} from 'node:fs';
 const req=(path,body)=>new Request('http://localhost/api/transit/'+path,{method:'POST',body:JSON.stringify(body)});
 const body={from:[127.434,36.332],to:[127.384,36.35],mode:'all'};
+test('status reports the settings that actually decide whether this works', () => {
+  // The two things that break transit — a stale deployment and a key whose domain is not
+  // registered — are both invisible from outside, so diagnosing it was guesswork. The key itself
+  // must not come back.
+  const source = readFileSync('server/transit.mjs', 'utf8');
+  const at = source.indexOf("/api/transit/status");
+  const block = source.slice(at, at + 700);
+  assert.match(block, /serviceUri:env\.ODSAY_SERVICE_URI/, 'the domain it sends as Referer');
+  assert.match(block, /length:key\.length/, 'and enough of the key to tell which one is live');
+  assert.ok(!/key:key(?!\?)/.test(block), 'never the key itself');
+});
+
 test('missing key returns explicit unavailable, no fabricated routes',async()=>{const r=await handleTransit(req('routes',body));assert.equal(r.status,503);assert.equal((await r.json()).code,'NOT_CONFIGURED');});
 test('invalid and outside-city locations never call upstream',async()=>{let called=false;const r=await handleTransit(req('routes',{...body,from:[0,0]}),{ODSAY_API_KEY:'test'},async()=>{called=true;});assert.equal(r.status,400);assert.equal(called,false);});
 test('normalizes walking, subway and bus without claiming accessibility',()=>{const paths=normalizePaths({result:{path:[{info:{totalTime:30,totalWalk:400,payment:1500,mapObj:'0:0@1:2:1:3'},subPath:[{trafficType:3,sectionTime:5,distance:400},{trafficType:1,lane:[{name:'1호선'}],startName:'대전역',endName:'시청역',startX:127.434,startY:36.332,endX:127.384,endY:36.35},{trafficType:2,lane:[{busNo:'101'}]}]}]}});assert.deepEqual(paths[0].legs.map(l=>l.mode),['walk','subway','bus']);assert.ok(paths[0].legs.every(l=>l.accessibility==='unknown'));assert.equal(paths[0].legs[0].from,null);});
