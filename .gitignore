@@ -26,5 +26,9 @@ dist/
 !/public/assets/survey/stroller.webp
 !/public/assets/survey/vision.webp
 !/public/assets/survey/hearing.webp
+# The opening film. It is not in the restore manifest, so without these it simply would not exist
+# in a deployed build and the drawn placeholder would stand in for it.
+!/public/assets/intro.mp4
+!/public/assets/intro-poster.jpg
 /research/
 .vercel
