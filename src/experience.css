@@ -260,3 +260,21 @@
 .dj-intro-link{margin-left:auto;min-height:42px;padding:0 16px;border-radius:11px;border:1px solid #d6dfe4;background:#fff;color:#2c4557;font-size:13.5px;font-weight:650;white-space:nowrap}
 .dj-intro-link:hover{background:#f2f5f7;border-color:#b9c8d1}
 @media(max-width:740px){.dj-intro-link{display:none}}
+
+/* The gate. The film's own first frame sits behind it, so this reads as the film waiting rather
+   than a page in front of one. */
+.intro-gate{position:absolute;inset:0;z-index:3;display:grid;place-content:center;text-align:center;padding:24px}
+.intro-gate-body{position:relative;z-index:1;max-width:560px;display:flex;flex-direction:column;align-items:center}
+.intro-gate-eyebrow{margin:0 0 14px;font-size:13px;font-weight:700;letter-spacing:.08em;color:#e2b7a5}
+.intro-gate-title{display:block;font-size:clamp(28px,4.6vw,48px);font-weight:900;line-height:1.4;letter-spacing:-1.8px;color:#fff;word-break:keep-all;text-shadow:0 4px 30px #06121bb0}
+.intro-play{display:inline-flex;align-items:center;gap:12px;margin-top:30px;min-height:64px;padding:0 34px;border:0;border-radius:999px;background:#ce6b51;color:#fff;font:inherit;font-size:18px;font-weight:800;cursor:pointer;box-shadow:0 12px 34px #ce6b5150;animation:intro-beckon 2.6s 1.2s ease-in-out infinite}
+.intro-play:hover{background:#b85735;box-shadow:0 14px 40px #ce6b5166}
+.intro-play-mark{font-size:15px}
+@keyframes intro-beckon{0%,88%,100%{transform:scale(1)}92%{transform:scale(1.045)}96%{transform:scale(.99)}}
+.intro-gate-note{margin:14px 0 0;font-size:13px;color:#b9cad4}
+.intro-gate-skip{margin-top:22px;min-height:44px;padding:0 14px;border:0;background:transparent;color:#cfdde5;font:inherit;font-size:14px;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+.intro-gate-skip:hover{color:#fff}
+.intro-sound{min-height:44px!important;padding:0 16px;background:#ffffff1f;color:#dbe6ec;border-color:#ffffff33;font-size:13px}
+.intro-actions:has(.intro-sound){flex-direction:row;justify-content:flex-end;gap:8px}
+@media(prefers-reduced-motion:reduce){.intro-play{animation:none}}
+@media(max-width:740px){.intro-gate-title{font-size:clamp(22px,6.4vw,30px)}.intro-play{min-height:58px;font-size:16px;padding:0 26px}}

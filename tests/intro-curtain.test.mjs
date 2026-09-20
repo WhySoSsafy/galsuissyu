@@ -1,5 +1,5 @@
-// The opening is the first thing anyone sees and the film that belongs in it does not exist yet, so
-// these pin the contract the placeholder is standing in for.
+// The opening is the first thing anyone sees. These pin how it behaves: it waits to be started, it
+// is heard when it is, it survives a browser that refuses either, and it ends somewhere.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync, existsSync} from 'node:fs';
@@ -20,16 +20,23 @@ test('only a real media error falls through to the placeholder', () => {
   assert.match(intro, /\{!hasFilm&&/, 'the placeholder renders in its place');
 });
 
-test('a refused autoplay is retried, not treated as a missing film', () => {
-  // A tab opened in the background refuses play() every time. Giving up on it swapped the film for
-  // the placeholder on exactly the visit that matters most.
-  assert.ok(!/play\(\)\.catch\(\(\)=>setHasFilm\(false\)\)/.test(intro), 'a refused play must not discard the film');
-  assert.match(intro, /visibilitychange/, 'it should try again once the tab is looked at');
+test('the film waits for a press, which is what lets it be heard', () => {
+  // A page nobody has touched may not make noise, so an autoplaying film would have to be silent.
+  // The press on the gate is the gesture the browser wants.
+  assert.match(intro, /intro-gate/, 'there is a gate in front of the film');
+  assert.match(intro, /intro-play/, 'with something to press');
+  assert.ok(!/<video[^>]*autoPlay/.test(intro), 'the film must not start on its own');
+  assert.match(intro, /el\.muted=false;/, 'and it starts with its sound');
+  assert.match(intro, /playsInline/, 'inline, so a phone does not take it fullscreen');
 });
 
-test('the film is muted and inline, because a browser blocks one that is not', () => {
-  assert.match(intro, /muted/);
-  assert.match(intro, /playsInline/);
+test('a browser that still refuses sound plays the film anyway', () => {
+  assert.match(intro, /el\.muted=true;setMuted\(true\)/, 'it falls back to silent rather than to nothing');
+  assert.match(intro, /intro-sound/, 'and the control reports what actually happened');
+});
+
+test('the gate offers a way past the film', () => {
+  assert.match(intro, /intro-gate-skip/);
 });
 
 test('the call to action waits for the end, and can always be reached early', () => {
