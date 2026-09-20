@@ -14,4 +14,11 @@ dist/
 !/public/data/
 /public/data/*
 !/public/data/tour-places.json
+!/public/assets/
+/public/assets/*
+!/public/assets/survey/
+/public/assets/survey/*
+!/public/assets/survey/stroller.webp
+!/public/assets/survey/vision.webp
+!/public/assets/survey/hearing.webp
 /research/
