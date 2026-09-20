@@ -14,6 +14,7 @@ dist/
 !/public/data/
 /public/data/*
 !/public/data/tour-places.json
+!/public/data/bus-stops.json
 !/public/assets/
 /public/assets/*
 !/public/assets/survey/
@@ -26,3 +27,4 @@ dist/
 !/public/assets/survey/vision.webp
 !/public/assets/survey/hearing.webp
 /research/
+.vercel

@@ -6,6 +6,7 @@ import {accessCoverage,categories,districtCenters,distance,formatDistance,access
 import type {RouteResult} from './route-engine';
 import {places as trustedPlaces} from './places';
 import {companions,toCityPlace,type Companion,type TourPlace,type TourSnapshot} from './tour-data';
+import type {BusStop} from './bus-stops';
 import {TourAccess} from './TourAccess';
 import './city-explorer.css';
 import './mobile-map.css';
@@ -29,6 +30,22 @@ const preferenceLabels:[keyof Mobility,string,string][]=[['wheelchair','휠체�
 const normalize=(v:string)=>v.replace(/\s/g,'').toLowerCase();
 // Folds the Tourism Organization's Daejeon records into the map's own place list. An OSM entry with
 // the same name within 150m is the same door, so the richer record wins; everything else is added.
+// Daejeon publishes every bus stop in the city; the OSM extract had 25 of them. A stop is where a
+// journey actually starts, so they are drawn and routed to like any other place. The register also
+// records whether each one has an arrival display, which is the difference between waiting with
+// information and waiting without it.
+function includeBusStops(data:CityData,stops:BusStop[]):CityData{
+ if(!stops.length)return data;
+ const added:CityPlace[]=stops.map(s=>({
+  id:'bus-'+s.id,name:s.name,category:'station',lon:s.lon,lat:s.lat,district:s.district,
+  wheelchair:'unknown',toiletWheelchair:'unknown',access:'unknown',
+  hours:'',phone:'',website:'',source:'https://www.data.go.kr',address:[s.district,s.dong].filter(Boolean).join(' '),
+  checkedAt:'',facilities:[],verified:false,
+  accessNotes:[s.arrivalDisplay?'버스안내단말기가 설치된 정류장으로 등록되어 있어요.':'버스안내단말기는 등록되어 있지 않아요. 도착 정보를 현장에서 확인하기 어려울 수 있어요.'],
+ }));
+ return {...data,places:[...data.places,...added]};
+}
+
 function includeTourPlaces(data:CityData,tour:TourPlace[]):CityData{
  const added=tour.map(toCityPlace).filter((p):p is CityPlace=>!!p);
  if(!added.length)return data;
@@ -63,10 +80,12 @@ export default function CityExplorer({onLegacy,onPilotAssets,initialPilot,onStat
   fetch('/data/places.json').then(r=>{if(!r.ok)throw Error();return r.json();}),
   // The Tourism Organization snapshot is a bonus layer: if it fails the map still opens on OSM data.
   fetch('/data/tour-places.json').then(r=>r.ok?r.json():null).catch(()=>null),
- ]).then(([city,snapshot]:[CityData,TourSnapshot|null])=>{
+  fetch('/data/bus-stops.json').then(r=>r.ok?r.json():null).catch(()=>null),
+ ]).then(([city,snapshot,buses]:[CityData,TourSnapshot|null,{stops:BusStop[]}|null])=>{
   if(stopped)return;
   setTour(snapshot);
-  setData(includeTrusted(snapshot?includeTourPlaces(city,snapshot.places):city));
+  const withStops=buses?.stops?.length?includeBusStops(city,buses.stops):city;
+  setData(includeTrusted(snapshot?includeTourPlaces(withStops,snapshot.places):withStops));
  }).catch(()=>setDataError(true));try{const stored=localStorage.getItem('galsuissyu-city-prefs');if(stored){const parsed=JSON.parse(stored);const values=parsed?.version===1?parsed.values:parsed;const safe={...initialPrefs};for(const key of Object.keys(safe) as (keyof Mobility)[])if(typeof values?.[key]==='boolean')safe[key]=values[key];setPrefs(safe);const saved=parsed?.companion;if(Array.isArray(saved))setCompanion(saved.filter((k:string)=>companions.some(c=>c.key===k)));}else setWantSurvey(true);}catch{}return()=>{stopped=true;};},[]);
  useEffect(()=>{worker.current=new Worker(new URL('./route.worker.ts',import.meta.url),{type:'module'});worker.current.onmessage=e=>{
   // Walk-leg jobs carry their own ids and are answered through the map of waiting resolvers.

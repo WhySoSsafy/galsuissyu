@@ -9,7 +9,8 @@
     "build": "vite build --outDir dist/client && node scripts/prepare-worker-build.mjs",
     "dev:api": "node server/dev-api.mjs",
     "test:transit": "node --test tests/*.test.mjs",
-    "build:vercel": "npm run assets:restore && vite build --outDir dist/client"
+    "build:vercel": "npm run assets:restore && vite build --outDir dist/client",
+    "data:bus-stops": "node scripts/build-bus-stops.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "1.1.15",
