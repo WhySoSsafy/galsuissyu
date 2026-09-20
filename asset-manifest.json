@@ -27,26 +27,6 @@
       "sha256": "44c9e7da8f61b28257253a0fdb1cbc2a98245363c3349a828506d9626698eb1b"
     },
     {
-      "path": "public/assets/survey/ramp.webp",
-      "size": 44626,
-      "sha256": "3428fbc7a2f0a848ef0d53d9872c841cfcd9b61506be2951175dc6f534698169"
-    },
-    {
-      "path": "public/assets/survey/README.md",
-      "size": 531,
-      "sha256": "16c2dbd0be708e45c52a3e0eca61b76722f4512e0c7fbef2839b6504b0f135fc"
-    },
-    {
-      "path": "public/assets/survey/rest.webp",
-      "size": 70112,
-      "sha256": "5b862e7cba5544d288f865f255ae9bdbcb2454f58bce3e22631d55eb35aa403d"
-    },
-    {
-      "path": "public/assets/survey/wheelchair.webp",
-      "size": 36544,
-      "sha256": "2433f4db23128829c74d595701df027e2cd39e1208657f06c6bb9725a6ca07cd"
-    },
-    {
       "path": "public/assets/traveler.webp",
       "size": 6644,
       "sha256": "39bba138c14d057928dff9b9754b1e9c7d3610339d7922fb05c563ef36ce6cd0"

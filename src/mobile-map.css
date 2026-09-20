@@ -64,6 +64,31 @@
  .map-tile-loading{top:var(--search-bottom);bottom:auto;left:12px;max-width:calc(100% - 78px);padding:6px 9px;font-size:12px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#ffffffda}
  .dj-pilot-loading.is-error{top:auto;bottom:12px;left:12px;max-width:calc(100% - 24px);font-size:13px;padding:9px;line-height:1.5}.mobile-place .dj-pilot-loading.is-error{bottom:100px}
  .dj-map-stage .maplibregl-ctrl-bottom-left,.dj-map-stage .maplibregl-ctrl-bottom-right{bottom:0}.mobile-place .dj-map-stage .maplibregl-ctrl-bottom-left,.mobile-place .dj-map-stage .maplibregl-ctrl-bottom-right{bottom:94px}.sheet-half .dj-map-stage .maplibregl-ctrl-bottom-left,.sheet-half .dj-map-stage .maplibregl-ctrl-bottom-right{bottom:42dvh}
+ /* The desktop opens a place beside the list. A phone has no room beside anything, so the detail
+    card becomes the sheet itself: same rounded top, same place above the nav, and it covers the
+    list rather than sitting next to it. */
+ /* Route mode hides the browse list, but while an endpoint is being picked that list IS the answer
+    to what was just typed, so it has to come back. */
+ .is-picking.mobile-route .dj-browse-results{display:block}
+ .is-picking .dj-panel,.is-picking .dj-panel.expanded{height:calc(100% - var(--search-bottom) - var(--nav-height) - 16px)}
+ .is-picking .dj-scroll{display:block}
+ .dj-detail-pane{position:absolute;left:10px;right:10px;top:auto;bottom:calc(var(--nav-height) + 8px);width:auto;max-width:none;height:calc(100% - var(--search-bottom) - var(--nav-height) - 16px);border-radius:16px;z-index:9;animation:detail-rise .24s cubic-bezier(.22,.7,.3,1)}
+ @keyframes detail-rise{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+ .dj-detail-head{padding:12px 8px 12px 4px}
+ .dj-detail-head strong{font-size:16px}
+ .dj-detail-scroll{padding:14px 16px 24px}
+ .dj-detail-actions button{min-height:46px;font-size:14px}
+ .mobile-browse .dj-detail-pane,.mobile-search .dj-detail-pane{display:none}
+ /* Two tabs and a search box are all that fit above the sheet; the tabs ride inside it. */
+ .dj-panel-tabs{margin-top:10px}
+ .dj-panel-tabs button{min-height:42px;font-size:14px}
+ /* A result row keeps its endpoint buttons, stacked so the name is never squeezed to two letters. */
+ .dj-place-row{gap:10px;padding:4px 0}
+ .dj-place-main{padding:11px 0}
+ .dj-row-actions{flex-direction:column;gap:4px}
+ .dj-row-actions button{min-height:34px;padding:0 10px;font-size:12px}
+ .dj-place-symbol{min-width:52px;width:52px;height:56px}
+ .dj-place-symbol i{font-size:18px}
  .map-data-error{bottom:100px;z-index:10}.map-fatal-error{top:40%;bottom:auto}
 }
 

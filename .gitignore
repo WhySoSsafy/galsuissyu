@@ -18,6 +18,10 @@ dist/
 /public/assets/*
 !/public/assets/survey/
 /public/assets/survey/*
+!/public/assets/survey/README.md
+!/public/assets/survey/wheelchair.webp
+!/public/assets/survey/ramp.webp
+!/public/assets/survey/rest.webp
 !/public/assets/survey/stroller.webp
 !/public/assets/survey/vision.webp
 !/public/assets/survey/hearing.webp

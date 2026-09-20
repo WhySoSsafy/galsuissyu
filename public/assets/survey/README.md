@@ -1,0 +1,3 @@
+Six accessibility survey illustrations generated with built-in imagegen on 2026-09-20. All six follow the user-supplied clay-figurine reference: rounded Korean miniature characters or objects, matte sculpted texture, simplified faces, pastel colors, warm white background, soft daylight, and no text, UI, or logos. They are not photographs of real people or facilities.
+
+Subjects: Korean adult in a manual wheelchair; compact stairs and adjacent ramp; elderly Korean adult resting on a bench with a cane; Korean adult pushing a baby stroller; Korean adult using a white cane over tactile paving; two Korean adults conversing in sign language. Source PNGs were converted to opaque 640x640 WebP files for the app.
