@@ -1,8 +1,18 @@
 // Provider credentials stay server-side. No route or location logging.
+// The domain ODsay checks our Referer against. It is pasted into a dashboard by hand, and a stray
+// word on the end ("galsuissyu.vercel.appFine. ") made every request fail as [ApiKeyAuthFailed] —
+// indistinguishable from a wrong key, and invisible without asking the deployment. Take the host
+// and nothing else.
+export function serviceHost(env={}){
+ const raw=String(env.ODSAY_SERVICE_URI??'').trim().replace(/^https?:\/\//,'');
+ const host=raw.match(/^[a-z0-9.-]+(:\d+)?/i)?.[0]?.replace(/\.+$/,'');
+ return host||'galsuissyu-map.superstarrypassion.chatgpt.site';
+}
+
 export class TransitError extends Error{constructor(code,message,status=502){super(message);this.code=code;this.status=status;}}
 const coord=p=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite)&&p[0]>=127.21&&p[0]<=127.58&&p[1]>=36.15&&p[1]<=36.54;
 const num=v=>v!==null&&v!==''&&Number.isFinite(Number(v))?Number(v):null;
-export function normalizePaths(data){
+export function normalizePaths(data,host){
  // ODsay reports failures as an object for routing errors but as an array for account-level ones
  // (quota, key). Reading only the object shape turned "Daily quota exceeded" into an undefined code
  // and a message that blamed the route.
@@ -11,6 +21,10 @@ export function normalizePaths(data){
   const code=String(fault.code??'UNKNOWN');
   if(['429','-8','8'].includes(code))throw new TransitError('QUOTA','대중교통 조회 한도를 모두 사용했어요. 내일 다시 이용하거나 보행 경로를 확인해 주세요.',429);
   if(['401','-9','9','-1','1'].includes(code))throw new TransitError('AUTH','대중교통 정보 연결 설정을 확인해야 해요.',502);
+  // A valid key still fails this way when the domain we send is not one registered for it, which
+  // reads as a bad key unless the domain is named.
+  if(/ApiKeyAuthFailed/i.test(String(fault.message??'')))throw new TransitError('DOMAIN',
+   `대중교통 키에 ${host||'이 도메인'}이(가) 등록되어 있지 않아요. ODsay 콘솔의 서비스 URL과 ODSAY_SERVICE_URI를 같게 맞춰 주세요.`,502);
   throw new TransitError(code,['-99','-98','3','4','5'].includes(code)?'이 구간의 대중교통 경로를 찾지 못했어요. 가까운 지점은 보행 경로를 확인해 주세요.':'교통 정보 제공처에서 조회를 완료하지 못했어요.',422);
  }
  if(data.result?.searchType&&data.result.searchType!==0)throw new TransitError('UNSUPPORTED','현재 대전 시내 경로만 지원해요.',422);
@@ -52,7 +66,8 @@ export async function handleTransit(request,env={},fetcher=fetch){
   const digest=key?[...key].reduce((h,c)=>(h*31+c.charCodeAt(0))>>>0,7).toString(36).slice(0,6):null;
   return respond({
    configured:!!key,
-   serviceUri:env.ODSAY_SERVICE_URI||null,
+   serviceUri:serviceHost(env),
+   serviceUriRaw:env.ODSAY_SERVICE_URI??null,
    key:key?{length:key.length,digest}:null,
   });
  }
@@ -61,7 +76,7 @@ export async function handleTransit(request,env={},fetcher=fetch){
  try{
   const raw=await request.text();if(raw.length>4096)throw new TransitError('INVALID_REQUEST','요청이 너무 커요.',413);
   let body;try{body=JSON.parse(raw);}catch{throw new TransitError('INVALID_REQUEST','요청 형식이 올바르지 않아요.',400);}
-  const call=async(endpoint,params)=>{const u=new URL('https://api.odsay.com/v1/api/'+endpoint);for(const [k,v] of Object.entries({...params,apiKey:env.ODSAY_API_KEY,output:'json'}))u.searchParams.set(k,String(v));const serviceUri=env.ODSAY_SERVICE_URI||'galsuissyu-map.superstarrypassion.chatgpt.site';const serviceOrigin='https://'+serviceUri.replace(/^https?:\/\//,'').replace(/\/$/,'');const r=await fetcher(u,{headers:{Referer:serviceOrigin+'/',Origin:serviceOrigin},signal:AbortSignal.timeout(18000)});if(!r.ok)throw new TransitError('UPSTREAM','교통 정보를 잠시 불러오지 못했어요.');return r.json();};
+  const call=async(endpoint,params)=>{const u=new URL('https://api.odsay.com/v1/api/'+endpoint);for(const [k,v] of Object.entries({...params,apiKey:env.ODSAY_API_KEY,output:'json'}))u.searchParams.set(k,String(v));const serviceOrigin='https://'+serviceHost(env);const r=await fetcher(u,{headers:{Referer:serviceOrigin+'/',Origin:serviceOrigin},signal:AbortSignal.timeout(18000)});if(!r.ok)throw new TransitError('UPSTREAM','교통 정보를 잠시 불러오지 못했어요.');return r.json();};
   if(url.pathname==='/api/transit/routes'){
    if(!coord(body.from)||!coord(body.to)||!['all','bus','subway'].includes(body.mode))throw new TransitError('INVALID_REQUEST','대전 안의 출발·도착 위치와 이동 수단을 선택해 주세요.',400);
    if(body.from.every((v,i)=>v===body.to[i]))throw new TransitError('SAME_POINT','출발지와 도착지를 다르게 선택해 주세요.',400);
@@ -69,7 +84,7 @@ export async function handleTransit(request,env={},fetcher=fetch){
    const data=await cached(key,ROUTE_TTL,()=>call('searchPubTransPathT',{SX:body.from[0],SY:body.from[1],EX:body.to[0],EY:body.to[1],SearchType:0,SearchPathType:{all:0,subway:1,bus:2}[body.mode]}));
    // normalizePaths throws for provider-side failures, so do it outside the cache: a quota answer
    // must not be remembered as if it were this route's result.
-   let routes;try{routes=normalizePaths(data);}catch(e){cache.delete(key);throw e;}
+   let routes;try{routes=normalizePaths(data,serviceHost(env));}catch(e){cache.delete(key);throw e;}
    return respond({routes,source:'ODsay',checkedAt:new Date().toISOString()});
   }
   if(url.pathname==='/api/transit/geometry'){

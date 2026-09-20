@@ -1,16 +1,38 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {handleTransit,normalizePaths} from '../server/transit.mjs';import {readFileSync} from 'node:fs';
+import test from 'node:test';import assert from 'node:assert/strict';import {handleTransit,normalizePaths,serviceHost} from '../server/transit.mjs';import {readFileSync} from 'node:fs';
 const req=(path,body)=>new Request('http://localhost/api/transit/'+path,{method:'POST',body:JSON.stringify(body)});
 const body={from:[127.434,36.332],to:[127.384,36.35],mode:'all'};
-test('status reports the settings that actually decide whether this works', () => {
-  // The two things that break transit — a stale deployment and a key whose domain is not
-  // registered — are both invisible from outside, so diagnosing it was guesswork. The key itself
-  // must not come back.
-  const source = readFileSync('server/transit.mjs', 'utf8');
-  const at = source.indexOf("/api/transit/status");
-  const block = source.slice(at, at + 700);
-  assert.match(block, /serviceUri:env\.ODSAY_SERVICE_URI/, 'the domain it sends as Referer');
-  assert.match(block, /length:key\.length/, 'and enough of the key to tell which one is live');
-  assert.ok(!/key:key(?!\?)/.test(block), 'never the key itself');
+test('a domain the key does not cover says so, and names the domain', () => {
+  // This was the whole outage: ODSAY_SERVICE_URI held "galsuissyu.vercel.appFine. " after a paste,
+  // so ODsay answered [ApiKeyAuthFailed] — which reads as a bad key. Nothing on the outside said
+  // which of the two settings was wrong.
+  assert.throws(
+    () => normalizePaths({error: [{code: '500', message: '[ApiKeyAuthFailed] ApiKey authentication failed.'}]}, 'galsuissyu.vercel.appFine'),
+    (e) => e.code === 'DOMAIN' && e.message.includes('galsuissyu.vercel.appFine'),
+  );
+});
+
+test('the service domain survives a clumsy paste', () => {
+  const host = (v) => serviceHost({ODSAY_SERVICE_URI: v});
+  assert.equal(host('  https://galsuissyu.vercel.app/  '), 'galsuissyu.vercel.app', 'scheme, slash and spaces');
+  assert.equal(host('galsuissyu.vercel.app 입니다'), 'galsuissyu.vercel.app', 'a word pasted after it');
+  assert.equal(host('localhost:5173'), 'localhost:5173', 'a port is part of the host');
+  assert.ok(host('').length > 0, 'and an empty value still has a default');
+});
+
+test('status reports the settings that actually decide whether this works', async () => {
+  // The two things that break transit — a dashboard edit that never reached the running deployment,
+  // and a key whose domain is not registered — are both invisible from outside. The key itself must
+  // not come back.
+  const secret = 'io1jgPsecretkeyvalue22';
+  const response = await handleTransit(new Request('https://x/api/transit/status'),
+    {ODSAY_API_KEY: secret, ODSAY_SERVICE_URI: ' https://galsuissyu.vercel.app/ '});
+  const body = await response.json();
+  assert.equal(body.configured, true);
+  assert.equal(body.serviceUri, 'galsuissyu.vercel.app', 'the domain it will actually send');
+  assert.equal(body.serviceUriRaw, ' https://galsuissyu.vercel.app/ ', 'and what was typed, to see a paste going wrong');
+  assert.equal(body.key.length, secret.length, 'enough of the key to tell which one is live');
+  assert.ok(body.key.digest && body.key.digest.length <= 6);
+  assert.ok(!JSON.stringify(body).includes(secret), 'and never the key itself');
 });
 
 test('missing key returns explicit unavailable, no fabricated routes',async()=>{const r=await handleTransit(req('routes',body));assert.equal(r.status,503);assert.equal((await r.json()).code,'NOT_CONFIGURED');});
