@@ -8,5 +8,10 @@ dist/
 .wrangler/
 # GitHub collaborators restore these large generated assets with assets:restore.
 # Existing Sites-tracked copies remain tracked.
-/public/
+# Git will not descend into an excluded directory, so the path down to the one file we do keep has
+# to be opened level by level.
+/public/*
+!/public/data/
+/public/data/*
+!/public/data/tour-places.json
 /research/
