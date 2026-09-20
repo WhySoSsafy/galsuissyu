@@ -1,15 +1,82 @@
 import {useEffect,useState} from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import type {AccessCoverage,Mobility} from './city-data';
+import type {Mobility} from './city-data';
 import {companions,type Companion} from './tour-data';
-const choices=[{key:'wheelchair',image:'wheelchair',title:'휠체어·유아차로 이동해요',copy:'휠체어 불가로 등록된 길을 제외해요.'},{key:'steps',image:'ramp',title:'계단 없는 길이 좋아요',copy:'계단으로 등록된 구간을 제외해요.'},{key:'rest',image:'rest',title:'중간중간 쉬고 싶어요',copy:'경로와 도착지 주변 쉼터를 함께 봐요.'}] as const;
-export function MobilitySurvey({open,onOpenChange,value,onSave,coverage,companion,tour,onReplayIntro}:{open:boolean;onOpenChange:(v:boolean)=>void;value:Mobility;onSave:(p:Mobility,companion:Companion[])=>void;coverage:AccessCoverage|null;companion:Companion[];tour:Record<string,number>|null;onReplayIntro?:()=>void}){
+
+// Each step is a picture question. Someone meeting this for the first time should be able to tell
+// what is being asked without reading a word, so the title carries its own image and every option
+// is a card with one.
+const art=(name:string)=>'/assets/survey/'+name+'.webp';
+const STEPS=[
+ {key:'companion',image:'step-companion',title:'누구와 함께 가시나요?',help:'일행 중 한 사람이 못 가면 모두가 못 가요. 함께 가는 분에 맞춰 안내를 골라 드려요.'},
+ {key:'route',image:'step-route',title:'어떤 길이 더 편하신가요?',help:'해당하는 항목을 모두 골라 주세요. 나중에 바꿀 수 있어요.'},
+ {key:'surface',image:'step-surface',title:'조금 더 편한 길을 골라요',help:'노면과 경사에 대한 선호를 반영해요.'},
+] as const;
+
+const routeChoices=[
+ {key:'wheelchair',image:'wheelchair',title:'휠체어·유아차로 이동해요',copy:'휠체어 불가로 등록된 길을 제외해요.'},
+ {key:'steps',image:'ramp',title:'계단 없는 길이 좋아요',copy:'계단으로 등록된 구간을 제외해요.'},
+ {key:'rest',image:'rest',title:'중간중간 쉬고 싶어요',copy:'경로와 도착지 주변 쉼터를 함께 봐요.'},
+] as const;
+// The last step used to be two bare checkboxes — the only screen in the flow without a picture.
+const surfaceChoices=[
+ {key:'steep',image:'slope',title:'가파른 경사를 피할게요',copy:'경사 5% 초과로 기록된 구간을 제외해요.'},
+ {key:'rough',image:'surface',title:'매끄러운 길이 좋아요',copy:'자갈·흙·모래로 기록된 길을 제외해요.'},
+] as const;
+
+function Card({pressed,image,title,copy,onClick}:{pressed:boolean;image:string;title:string;copy:string;onClick:()=>void}){
+ return <button type="button" aria-pressed={pressed} onClick={onClick}>
+  <span className="survey-check" aria-hidden="true">{pressed?'✓':'+'}</span>
+  <span className="survey-card-art"><img src={art(image)} alt="" loading="lazy" onError={e=>{(e.currentTarget as HTMLImageElement).hidden=true;}}/></span>
+  <strong>{title}</strong><small>{copy}</small>
+ </button>;
+}
+
+export function MobilitySurvey({open,onOpenChange,value,onSave,companion}:{
+ open:boolean;onOpenChange:(v:boolean)=>void;value:Mobility;onSave:(p:Mobility,companion:Companion[])=>void;companion:Companion[];
+}){
  const [draft,setDraft]=useState(value),[step,setStep]=useState(0),[group,setGroup]=useState<Companion[]>(companion);
- // The opening step is the reason this app exists, so it only appears once the numbers behind it
- // are loaded. Without them the survey starts where it always did.
- const steps=coverage?4:3,offset=coverage?1:0;
  useEffect(()=>{if(open){setDraft(value);setGroup(companion);setStep(0);}},[open]);
- return <Dialog.Root open={open} onOpenChange={onOpenChange}><Dialog.Portal><Dialog.Overlay className="dj-survey-overlay"/><Dialog.Content className="mobility-survey"><Dialog.Close className="dj-survey-close" aria-label="설문 닫기">×</Dialog.Close><div className="survey-content"><span className="survey-step">{coverage&&step===0?'갈수있슈가 시작된 이유':'나에게 맞는 여행 준비'} · {step+1} / {steps}</span><Dialog.Title>{coverage&&step===0?'대전의 길은 아직 기록되지 않았어요':step===offset?'누구와 함께 가시나요?':step===offset+1?'어떤 길이 더 편하신가요?':'조금 더 편한 길을 골라요'}</Dialog.Title><Dialog.Description>{coverage&&step===0?'우리가 수집한 대전 전역 자료를 세어 본 결과예요.':step===offset?'일행 중 한 사람이 못 가면 모두가 못 가요. 함께 가는 분에 맞춰 안내를 골라 드려요.':step===offset+1?'해당하는 항목을 모두 골라 주세요. 나중에 바꿀 수 있어요.':'노면과 경사에 대한 선호를 반영해요.'}</Dialog.Description>
- {coverage&&step===0?<div className="survey-evidence"><figure className="survey-meter"><figcaption><b>51곳</b><span>기록된 곳</span></figcaption><svg viewBox="0 0 600 34" role="img" aria-label={`대전에 기록된 장소 ${coverage.places.toLocaleString()}곳 가운데 휠체어 접근성이 표기된 곳은 ${coverage.documented.toLocaleString()}곳이에요.`}><rect x="0" y="0" width="600" height="34" rx="8" fill="#c9b8b0"/><rect x="0" y="0" width={Math.max(6,600*coverage.documented/coverage.places)} height="34" rx="8" fill="#c05f42"/></svg><figcaption className="survey-meter-end"><b>{coverage.places.toLocaleString()}곳</b><span>대전 전체</span></figcaption></figure><p className="survey-evidence-lead">나머지 <strong>{(coverage.places-coverage.documented).toLocaleString()}곳</strong>은 갈 수 있는지조차 알 수 없어요.</p><details className="survey-more"><summary>자세한 숫자</summary><ul className="survey-gaps"><li><b>{coverage.toiletsDocumented}</b><span>공개 화장실 {coverage.toilets}곳 중 휠체어 화장실로 확인된 곳</span></li><li><b>{coverage.elevators}</b><span>엘리베이터로 기록된 지점</span></li>{tour&&<><li><b>{tour.barrierFree}</b><span>관광공사 무장애 안내가 있는 곳 (관광지 {tour.total}곳 중)</span></li><li><b>{tour.barrierFreeHearing}</b><span>그중 청각 안내가 등록된 곳</span></li></>}</ul><small>OpenStreetMap 대전 스냅샷 {coverage.snapshot.slice(0,10)} · 한국관광공사 TourAPI 기준</small></details></div>:step===offset?<div className="survey-companions">{companions.map(c=><button key={c.key} type="button" aria-pressed={group.includes(c.key)} onClick={()=>setGroup(g=>g.includes(c.key)?g.filter(k=>k!==c.key):[...g,c.key])}><span className="survey-check" aria-hidden="true">{group.includes(c.key)?'✓':'+'}</span><span className="survey-companion-art"><img src={'/assets/survey/'+c.image+'.webp'} alt="" loading="lazy" onError={e=>{(e.currentTarget as HTMLImageElement).hidden=true;}}/></span><strong>{c.label}</strong><small>{c.help}</small></button>)}<p className="survey-companion-note">고르지 않아도 괜찮아요. 여러 개 골라도 돼요.</p></div>:step===offset+1?<div className="survey-cards">{choices.map(c=><button key={c.key} type="button" aria-pressed={draft[c.key]} onClick={()=>setDraft(p=>({...p,[c.key]:!p[c.key]}))}><span className="survey-check" aria-hidden="true">{draft[c.key]?'✓':'+'}</span><img src={'/assets/survey/'+c.image+'.webp'} alt=""/><strong>{c.title}</strong><small>{c.copy}</small></button>)}</div>:<div className="survey-refine">{([['steep','가파른 경사를 피할게요','경사 5% 초과로 기록된 구간 제외'],['rough','매끄러운 길이 좋아요','자갈·흙·모래로 기록된 길 제외']] as const).map(([key,label,help])=><label key={key}><input type="checkbox" checked={draft[key]} onChange={e=>setDraft(p=>({...p,[key]:e.target.checked}))}/><span><strong>{label}</strong><small>{help}</small></span></label>)}<div className="survey-note"><strong>모르는 정보는 모른다고 알려드려요.</strong><p>선택한 조건은 등록된 도로 정보에 반영돼요. 시설 고장이나 미등록 턱까지 확인된 경로라는 뜻은 아니에요.</p></div></div>}
- <div className="survey-footer"><small>선택은 이 기기에 저장돼요.{onReplayIntro&&<> · <button type="button" className="survey-replay" onClick={onReplayIntro}>소개 영상 다시 보기</button></>}</small><div>{step>0&&<button onClick={()=>setStep(step-1)}>이전</button>}<button className="survey-next" onClick={()=>step<steps-1?setStep(step+1):onSave(draft,group)}>{coverage&&step===0?'내 조건 고르기':step<steps-1?'다음':'대전 둘러보기'} →</button></div></div></div><aside className="survey-art"><img src="/assets/survey/rest.webp" alt=""/><span>서두르지 않아도 괜찮아요</span><strong>한 사람이<br/>갈 수 있으면,<br/>온 가족이 갑니다.</strong><p>나의 속도로 만나는 대전</p></aside></Dialog.Content></Dialog.Portal></Dialog.Root>;
+ const current=STEPS[step],last=step===STEPS.length-1;
+ const toggle=(key:'wheelchair'|'steps'|'rest'|'steep'|'rough')=>setDraft(p=>({...p,[key]:!p[key]}));
+
+ return <Dialog.Root open={open} onOpenChange={onOpenChange}><Dialog.Portal>
+  <Dialog.Overlay className="dj-survey-overlay"/>
+  <Dialog.Content className="mobility-survey">
+   <Dialog.Close className="dj-survey-close" aria-label="설문 닫기">×</Dialog.Close>
+   <div className="survey-content">
+    <header className="survey-head">
+     <span className="survey-head-art" aria-hidden="true"><img src={art(current.image)} alt="" onError={e=>{(e.currentTarget as HTMLImageElement).hidden=true;}}/></span>
+     <div>
+      <span className="survey-step">나에게 맞는 여행 준비 · {step+1} / {STEPS.length}</span>
+      <Dialog.Title>{current.title}</Dialog.Title>
+      <Dialog.Description>{current.help}</Dialog.Description>
+     </div>
+    </header>
+
+    <div className="survey-body">
+     {step===0&&<div className="survey-cards survey-cards-5">{companions.map(c=>
+      <Card key={c.key} pressed={group.includes(c.key)} image={c.image} title={c.label} copy={c.help}
+       onClick={()=>setGroup(g=>g.includes(c.key)?g.filter(k=>k!==c.key):[...g,c.key])}/>)}</div>}
+
+     {step===1&&<div className="survey-cards survey-cards-3">{routeChoices.map(c=>
+      <Card key={c.key} pressed={draft[c.key]} image={c.image} title={c.title} copy={c.copy} onClick={()=>toggle(c.key)}/>)}</div>}
+
+     {step===2&&<><div className="survey-cards survey-cards-2">{surfaceChoices.map(c=>
+      <Card key={c.key} pressed={draft[c.key]} image={c.image} title={c.title} copy={c.copy} onClick={()=>toggle(c.key)}/>)}</div>
+      <div className="survey-note"><strong>모르는 정보는 모른다고 알려드려요.</strong>
+       <p>선택한 조건은 등록된 도로 정보에 반영돼요. 시설 고장이나 미등록 턱까지 확인된 경로라는 뜻은 아니에요.</p></div></>}
+    </div>
+
+    <div className="survey-footer">
+     {step>0&&<button onClick={()=>setStep(step-1)}>이전</button>}
+     <button className="survey-next" onClick={()=>last?onSave(draft,group):setStep(step+1)}>{last?'대전 둘러보기':'다음'} →</button>
+    </div>
+   </div>
+   <aside className="survey-art">
+    <img src={art('family')} alt="" onError={e=>{(e.currentTarget as HTMLImageElement).hidden=true;}}/>
+    <strong>한 사람이<br/>갈 수 있으면,<br/>온 가족이 갑니다.</strong>
+   </aside>
+  </Dialog.Content>
+ </Dialog.Portal></Dialog.Root>;
 }

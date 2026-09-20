@@ -66,10 +66,12 @@ test('the call to action waits for the end, and can always be reached early', ()
   assert.match(intro, /onExplore/);
 });
 
-test('dismissing it is remembered, and 마이 can bring it back', () => {
+test('dismissing it is remembered, and the header can bring it back', () => {
+  // The replay used to sit in the survey footer as well. One way back is enough, and the survey is
+  // now three picture questions with nothing else on them.
   assert.match(explorer, /localStorage\.setItem\('galsuissyu-intro-seen','1'\)/);
   assert.match(explorer, /history\.pushState\(null,'','\/intro'\)/, 'the replay path opens the film by its own address');
-  assert.match(explorer, /onReplayIntro=/);
+  assert.ok(!explorer.includes('onReplayIntro'), 'and it is not also duplicated inside the survey');
 });
 
 test('the opening does not collide with the first-visit survey', () => {

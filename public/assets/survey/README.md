@@ -1,3 +1,47 @@
-Six accessibility survey illustrations generated with built-in imagegen on 2026-09-20. All six follow the user-supplied clay-figurine reference: rounded Korean miniature characters or objects, matte sculpted texture, simplified faces, pastel colors, warm white background, soft daylight, and no text, UI, or logos. They are not photographs of real people or facilities.
+# 설문 일러스트
 
-Subjects: Korean adult in a manual wheelchair; compact stairs and adjacent ramp; elderly Korean adult resting on a bench with a cane; Korean adult pushing a baby stroller; Korean adult using a white cane over tactile paving; two Korean adults conversing in sign language. Source PNGs were converted to opaque 640x640 WebP files for the app.
+모두 같은 클레이(점토) 피규어 스타일입니다. 둥근 한국인 미니어처 캐릭터나 사물, 무광 조형 질감,
+단순화한 얼굴, 파스텔 톤, 따뜻한 흰 배경, 부드러운 주광. **글자·UI·로고는 넣지 않습니다.**
+실제 인물이나 시설의 사진이 아닙니다.
+
+앱은 `mix-blend-mode: multiply`로 배경을 카드 색에 녹입니다. 그래서 **배경은 반드시 흰색에 가깝게**,
+그림자는 옅게 깔아 주세요. 모두 **640×640 WebP, 불투명**(`family.webp`만 세로형)입니다.
+파일이 없으면 그 자리는 옅은 회색 상자로 비고, 앱은 정상 동작합니다.
+
+## 있는 파일
+
+| 파일 | 내용 |
+|---|---|
+| `wheelchair.webp` | 수동 휠체어를 탄 한국인 성인 |
+| `ramp.webp` | 계단과 그 옆의 경사로 |
+| `rest.webp` | 지팡이를 짚고 벤치에 앉아 쉬는 어르신 |
+| `stroller.webp` | 유아차를 미는 한국인 성인 |
+| `vision.webp` | 점자블록 위에서 흰 지팡이를 쓰는 한국인 성인 |
+| `hearing.webp` | 수어로 대화하는 두 한국인 성인 |
+
+## 필요한 파일
+
+### 1. `family.webp` — 오른쪽 패널 (가장 중요)
+- **세로형 3:4, 800×1067 정도.** 유일하게 정사각형이 아닙니다.
+- 3~4인 가족이 **함께 걷는** 모습. 지팡이 짚은 할머니 + 성인 1~2명 + 유아차나 아이.
+  한 명만 있는 그림이 아니라, 캐치프레이즈("한 사람이 갈 수 있으면, 온 가족이 갑니다")를
+  그림으로 말하는 장면이어야 합니다.
+- **인물이 화면 왼쪽(질문이 있는 쪽)을 향하도록.** 지금 그림은 바깥을 보고 있어서 시선이 밖으로 나갑니다.
+- 배경은 아주 연한 민트/흰색(패널 배경 `#edf5f0`과 이어지게).
+
+### 2. `step-companion.webp` — 1번 질문 "누구와 함께 가시나요?"
+여러 사람이 나란히 선 모습. 제목 옆 88×88에 들어가므로 **인물을 크게, 요소는 적게.**
+
+### 3. `step-route.webp` — 2번 질문 "어떤 길이 더 편하신가요?"
+갈림길이나 완만하게 휘는 보행로 하나. 사람은 없어도 됩니다.
+
+### 4. `step-surface.webp` — 3번 질문 "조금 더 편한 길을 골라요"
+완만한 언덕길과 바닥 재질이 보이는 짧은 길.
+
+### 5. `slope.webp` — "가파른 경사를 피할게요" 카드
+가파른 오르막 한 구간. `ramp.webp`처럼 사물 중심.
+
+### 6. `surface.webp` — "매끄러운 길이 좋아요" 카드
+매끈하게 포장된 길과 자갈·흙길이 맞닿은 한 장면. 차이가 한눈에 보이게.
+
+2~6번은 카드·제목 옆 작은 자리에 들어갑니다. 640×640 정사각형, 가운데 정렬, 여백은 넉넉하게.
