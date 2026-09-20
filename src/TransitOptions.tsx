@@ -6,7 +6,7 @@ async function api(path:string,body:unknown,signal:AbortSignal){
  const response=await fetch(base+'/api/transit/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal});
  if(!response.headers.get('content-type')?.includes('application/json'))throw Error('대중교통 서버에 연결하지 못했어요.');const data=await response.json();if(!response.ok)throw Error(data.error||'경로를 불러오지 못했어요.');return data;
 }
-export function TransitOptions({from,to,onModels,onJourney,autoRun,onAutoRunDone,recorded,tourFor,walkPaths}:{from:CityPlace|null;to:CityPlace|null;onModels:(id:PilotAssetId)=>void;onJourney:(journey:TransitSimulation|null)=>void;autoRun?:number;onAutoRunDone?:()=>void;recorded?:boolean;tourFor?:(place:CityPlace|null)=>TourPlace|null;walkPaths?:(legs:{from:Coordinate;to:Coordinate}[])=>Promise<(Coordinate[]|null)[]|null>}){
+export function TransitOptions({from,to,onModels,onJourney,autoRun,onAutoRunDone,recorded,tourFor,walkPaths}:{from:CityPlace|null;to:CityPlace|null;onModels:(id:PilotAssetId)=>void;onJourney:(journey:TransitSimulation|null)=>void;autoRun?:number;onAutoRunDone?:(played:boolean)=>void;recorded?:boolean;tourFor?:(place:CityPlace|null)=>TourPlace|null;walkPaths?:(legs:{from:Coordinate;to:Coordinate}[])=>Promise<(Coordinate[]|null)[]|null>}){
  const [mode,setMode]=useState('all'),[routes,setRoutes]=useState<TransitRoute[]>([]),[busy,setBusy]=useState(false),[error,setError]=useState(''),[searched,setSearched]=useState(false),[selected,setSelected]=useState<string|null>(null),[drawing,setDrawing]=useState(false),[fromRecording,setFromRecording]=useState(false);
  // The Tourism Organization lists low-floor routes serving a place, so a bus on this trip can be
  // checked against the ones registered at either end. Nothing is claimed for buses it never mentions.
@@ -24,19 +24,25 @@ export function TransitOptions({from,to,onModels,onJourney,autoRun,onAutoRunDone
  useEffect(()=>{
   if(!autoRun||!from||!to)return;let cancelled=false;
   (async()=>{
-   const saved=await fetch('/data/demo-route.json').then(r=>r.ok?r.json():null).catch(()=>null);
+   // A missing file is answered by the single-page fallback — index.html, with a 200. Reading it as
+   // the recording would throw; asking for JSON is what distinguishes the two.
+   const saved=await fetch('/data/demo-route.json')
+    .then(r=>r.ok&&r.headers.get('content-type')?.includes('json')?r.json():null).catch(()=>null);
    if(cancelled)return;
    if(saved?.routes?.length){
     const named=(saved.routes as TransitRoute[]).map(r=>nameWalkLegs(r,from.name,to.name));
     setRoutes(named);setSearched(true);setFromRecording(true);
     const playable=named.find(r=>r.id===saved.playableRouteId)??named.find(r=>r.mapObj);
     if(playable&&saved.geometry)await auto.current.show(playable,saved.geometry);
-    if(!cancelled)onAutoRunDone?.();
+    if(!cancelled)onAutoRunDone?.(!!(playable&&saved.geometry));
     return;
    }
-   const found=await auto.current.search();if(cancelled||!found?.length)return;
-   const playable=found.find(r=>r.mapObj)??null;if(playable)await auto.current.show(playable);
-   if(!cancelled)onAutoRunDone?.();
+   const found=await auto.current.search();if(cancelled)return;
+   const playable=found?.find(r=>r.mapObj)??null;
+   if(playable)await auto.current.show(playable);
+   // Whoever sent us here cleared the screen for a run. Say whether one arrived, so a provider that
+   // is down or out of allowance gives back a panel with the reason rather than an empty map.
+   if(!cancelled)onAutoRunDone?.(!!playable);
   })();
   return()=>{cancelled=true;};
  },[autoRun]);

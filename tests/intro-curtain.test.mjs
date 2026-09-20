@@ -112,6 +112,19 @@ test('the film has an address of its own', () => {
   assert.match(explorer, /history\.replaceState\(null,'','\/'\)/, 'leaving it puts the map in the address bar');
 });
 
+test('a run that never arrives gives the screen back', () => {
+  // The film clears everything for the simulation. When the transit provider is down or out of its
+  // daily allowance, nothing plays, and a judge was left on a bare map with two pins and no reason.
+  const transit = readFileSync('src/TransitOptions.tsx', 'utf8');
+  assert.match(transit, /onAutoRunDone\?:\(played:boolean\)=>void/, 'the run reports whether it played');
+  assert.match(transit, /onAutoRunDone\?\.\(!!playable\)/, 'including when the search came back empty');
+  assert.match(transit, /content-type'\)\?\.includes\('json'\)/,
+    'and a missing recording is the single-page fallback, not a recording');
+  assert.match(explorer, /onAutoRunDone=\{demoFinished\}/);
+  assert.match(explorer, /if\(played\|\|!showcase\)return;/);
+  assert.match(explorer, /setShowcase\(false\);setPanelOpen\(true\)/, 'the panel comes back with the reason on it');
+});
+
 test('taking the run from the film clears the screen for it', () => {
   assert.match(explorer, /onSimulate=\{\(\)=>\{closeIntro\(\);runDemo\(true\);\}\}/);
   assert.match(explorer, /setPanelOpen\(!focused\);setShowcase\(focused\)/, 'the panel gets out of the way');
