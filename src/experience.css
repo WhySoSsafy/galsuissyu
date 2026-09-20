@@ -43,24 +43,18 @@
 .dj-categories button.active{background:#eef3f7;border-color:#8ea9bc;color:#28485b}
 .dj-map-caption .dj-mode-dot{background:#4d7f9c}
 .dj-map-top-toggle{color:#4d6274}
-/* The map's own footer notes sit where the place card and the demo entry now go, and only one of
-   the three is ever the thing the viewer is acting on. */
-.dj-map-stage:has(.map-place-card) .dj-map-caption,.dj-map-stage:has(.map-place-card) .dj-demo-shortcut,.dj-map-stage:has(.map-place-card) .dj-expo-shortcut{display:none}
+/* The demo entry and the map's caption both sit low and centre; a place card takes that space. */
 .dj-map-stage:has(.dj-demo-shortcut) .dj-map-caption{display:none}
-.map-place-card{position:absolute;z-index:6;left:50%;transform:translateX(-50%);bottom:34px;width:340px;max-width:calc(100% - 44px);background:#fff;border:1px solid #dde5df;border-radius:15px;box-shadow:0 12px 34px #22402c24;padding:14px 15px 13px}
-.map-place-head{display:flex;align-items:flex-start;gap:10px}
-.map-place-head>div{flex:1;min-width:0}
-.map-place-head strong{display:block;font-size:16px;line-height:1.4;color:#24382c;word-break:keep-all}
-.map-place-head small{display:block;font-size:12px;color:#7d8c82;margin-top:4px}
-.map-place-close{width:30px;height:30px;font-size:20px;color:#8a978e;background:transparent;border:0;flex-shrink:0}
-.map-place-actions{display:flex;gap:7px;margin-top:12px}
-.map-place-actions button{flex:1;min-height:42px;border-radius:9px;font-size:14px;font-weight:650;border:1px solid #d6e2d9}
-.map-place-actions .as-start{background:#28485b;color:#fff;border-color:#28485b}
-.map-place-actions .as-end{background:#ce6b51;color:#fff;border-color:#ce6b51}
-.map-place-actions .as-detail{background:#f4f7f3;color:#4f6558}
-.dj-detail-pane{position:absolute;z-index:8;top:0;bottom:0;width:390px;max-width:calc(100vw - 100px);background:#fff;border-left:1px solid #e3e8ea;box-shadow:12px 0 36px #1d354522;display:flex;flex-direction:column}
-.daejeon-app:not(.panel-collapsed) .dj-detail-pane{left:432px}
-.daejeon-app.panel-collapsed .dj-detail-pane{left:72px}
+.daejeon-app:has(.dj-detail-pane) .dj-demo-shortcut,.daejeon-app:has(.dj-detail-pane) .dj-map-caption,.daejeon-app:has(.dj-detail-pane) .dj-expo-shortcut{display:none}
+/* A card that floats clear of the list rather than a second wall joined to it: the gap, the inset
+   top and bottom and the rounded corners are what say it can be closed. It sits under the list so
+   it can slide out from behind it. */
+.dj-detail-pane{position:absolute;z-index:3;top:12px;bottom:12px;width:390px;max-width:calc(100vw - 120px);background:#fff;border:1px solid #e3e8ea;border-radius:16px;box-shadow:0 14px 44px #1d35451f;display:flex;flex-direction:column;overflow:hidden;animation:detail-slide-in .26s cubic-bezier(.22,.7,.3,1)}
+.daejeon-app:not(.panel-collapsed) .dj-detail-pane{left:444px}
+.daejeon-app.panel-collapsed .dj-detail-pane{left:84px}
+@keyframes detail-slide-in{from{transform:translateX(-102%);opacity:0}to{transform:translateX(0);opacity:1}}
+@media(prefers-reduced-motion:reduce){.dj-detail-pane{animation:none}}
+.dj-detail-scroll{border-radius:0 0 16px 16px}
 .dj-detail-head{display:flex;align-items:center;gap:8px;padding:14px 12px 14px 8px;border-bottom:1px solid #edf0f1;flex-shrink:0}
 .dj-detail-head strong{flex:1;min-width:0;font-size:17px;line-height:1.4;color:#24384a;word-break:keep-all}
 .dj-detail-back,.dj-detail-close{width:36px;height:36px;flex-shrink:0;font-size:22px;color:#7d8c95;background:transparent;border:0}

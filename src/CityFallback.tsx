@@ -2,7 +2,7 @@ import {forwardRef,useEffect,useImperativeHandle,useRef,useState} from 'react';
 import {type CityPlace,type Coordinate,placeCoordinate} from './city-data';
 import {chooseMapPins} from './map-pins';
 import type {RouteResult} from './route-engine';
-export type CityViewHandle={fly:(p:Coordinate,zoom?:number)=>void;overview:()=>void;zoom:(factor:number)=>void;tilt:()=>void;fitRoute:(coords:Coordinate[])=>void};
+export type CityViewHandle={fly:(p:Coordinate,zoom?:number,inset?:number)=>void;overview:()=>void;zoom:(factor:number)=>void;tilt:()=>void;fitRoute:(coords:Coordinate[])=>void};
 type Props={transitGeometry?:GeoJSON.FeatureCollection<GeoJSON.LineString>|null;transitSimulation?:import('./transit-types').TransitSimulation|null;focusedPins?:boolean;places:CityPlace[];selected:string;from:CityPlace|null;to:CityPlace|null;route:RouteResult|null;onPick:(p:CityPlace)=>void;onPoint:(p:Coordinate)=>void};
 const origin=[127.395,36.34];const project=(c:number[])=>[(c[0]-origin[0])*89700,-(c[1]-origin[1])*111320];const unproject=(c:number[]):Coordinate=>[c[0]/89700+origin[0],origin[1]-c[1]/111320];
 export const CityFallback=forwardRef<CityViewHandle,Props>(function CityFallback(props,ref){
