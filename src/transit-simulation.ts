@@ -10,7 +10,53 @@ function join(parts:Coordinate[][]){
  return result;
 }
 
-export function buildTransitSimulation(route:TransitRoute,geometry:TransitGeometry,origin:Coordinate,destination:Coordinate):TransitSimulation{
+// ODsay names the boarding and alighting stops of a ride but leaves walk legs anonymous, which
+// surfaced in the UI as a literal "이전 지점 → 다음 지점". A walk is always bounded by the stop it
+// just left and the one it is heading for, so borrow those names; the ends of the trip fall back to
+// the places the traveller actually picked.
+export function nameWalkLegs(route:TransitRoute,originName:string,destinationName:string):TransitRoute{
+ const legs=route.legs.map((leg,index)=>{
+  if(leg.mode!=='walk')return leg;
+  const before=route.legs.slice(0,index).reverse().find(l=>l.mode!=='walk');
+  const after=route.legs.slice(index+1).find(l=>l.mode!=='walk');
+  return {...leg,start:leg.start??before?.end??originName,end:leg.end??after?.start??destinationName};
+ });
+ return {...route,legs};
+}
+
+// A walk that starts and ends at the same named place is movement inside it — the station concourse,
+// the bus stop forecourt — and "대전역 → 대전역" reads like a mistake.
+// The walk between a stop and the next one was drawn as a straight line, which sent the traveller
+// through rail yards and across rivers. Given real paths from the walking network, swap them in and
+// re-time the run; a leg the network could not connect keeps its straight line.
+export function withWalkPaths(simulation:TransitSimulation,paths:(Coordinate[]|null)[]):TransitSimulation{
+ let index=0,changed=false;
+ const drafts=simulation.segments.map(segment=>{
+  if(segment.mode!=='walk')return segment;
+  const path=paths[index++];
+  if(!path||path.length<2)return segment;
+  changed=true;
+  // Keep the provider's own timing for the leg; only the shape it takes on the map changes.
+  return {...segment,coordinates:path};
+ });
+ if(!changed)return simulation;
+ const totalMinutes=Math.max(1,drafts.reduce((sum,s)=>sum+s.minutes,0));
+ let elapsed=0;
+ const segments=drafts.map(s=>{const startProgress=elapsed/totalMinutes;elapsed+=s.minutes;return {...s,startProgress,endProgress:elapsed/totalMinutes};});
+ return {...simulation,segments,coordinates:join(segments.map(s=>s.coordinates)),totalMinutes};
+}
+
+// The endpoints of each walk leg, in the order withWalkPaths expects them back.
+export function walkLegEndpoints(simulation:TransitSimulation){
+ return simulation.segments.filter(s=>s.mode==='walk').map(s=>({from:s.coordinates[0],to:s.coordinates.at(-1)!}));
+}
+
+export function legSpan(start:string|null,end:string|null){
+ if(!start||!end)return '구간 정보 미확인';
+ return start===end?`${start} 안에서 이동`:`${start} → ${end}`;
+}
+
+export function buildTransitSimulation(route:TransitRoute,geometry:TransitGeometry,origin:Coordinate,destination:Coordinate,originName='출발지',destinationName='도착지'):TransitSimulation{
  const groups=new Map<number,{mode:'bus'|'subway';parts:Coordinate[][]}>();
  for(const feature of [...geometry.features].sort((a,b)=>a.properties.order-b.properties.order||a.properties.section-b.properties.section)){
   const row=groups.get(feature.properties.order)??{mode:feature.properties.mode,parts:[]};row.parts.push(feature.geometry.coordinates as Coordinate[]);groups.set(feature.properties.order,row);
@@ -31,7 +77,7 @@ export function buildTransitSimulation(route:TransitRoute,geometry:TransitGeomet
   const expected=leg.from??current;if(distance(coordinates.at(-1)!,expected)<distance(coordinates[0],expected))coordinates=[...coordinates].reverse();
   drafts.push({id:`${leg.mode}-${index}`,mode:leg.mode,line:leg.line,start:leg.start,end:leg.end,minutes:Math.max(.5,leg.minutes??pathDistance(coordinates)/(leg.mode==='subway'?550:320)),coordinates});current=coordinates.at(-1)!;
  }
- if(!same(current,destination))drafts.push({id:'walk-final',mode:'walk',line:'',start:null,end:null,minutes:Math.max(.35,pathDistance([current,destination])/65),coordinates:[current,destination]});
+ if(!same(current,destination))drafts.push({id:'walk-final',mode:'walk',line:'',start:route.legs.filter(l=>l.mode!=='walk').at(-1)?.end??originName,end:destinationName,minutes:Math.max(.35,pathDistance([current,destination])/65),coordinates:[current,destination]});
  const totalMinutes=Math.max(1,drafts.reduce((sum,s)=>sum+s.minutes,0));let elapsed=0;
  const segments=drafts.map(s=>{const startProgress=elapsed/totalMinutes;elapsed+=s.minutes;return {...s,startProgress,endProgress:elapsed/totalMinutes};});
  return {route,segments,coordinates:join(segments.map(s=>s.coordinates)),totalMinutes};

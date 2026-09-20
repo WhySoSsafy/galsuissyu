@@ -12,3 +12,20 @@ export function formatDistance(m:number){return m<1000?`${Math.round(m)}m`:`${(m
 export function accessLabel(p:CityPlace){return p.verified?'관광공사 시설 안내':p.wheelchair==='yes'?'OSM 휠체어 가능 표기':p.wheelchair==='no'?'OSM 휠체어 불가 표기':p.wheelchair==='limited'?'OSM 이용 제한 표기':'접근성 정보 미확인';}
 export function pointInRing(p:Coordinate,ring:number[][]){let hit=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const a=ring[i],b=ring[j];if((a[1]>p[1])!==(b[1]>p[1])&&p[0]<(b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0])hit=!hit;}return hit;}
 export function insideCity(p:Coordinate,g:GeoJSON.Geometry){if(g.type==='Polygon')return pointInRing(p,g.coordinates[0])&&!g.coordinates.slice(1).some(r=>pointInRing(p,r));if(g.type==='MultiPolygon')return g.coordinates.some(r=>pointInRing(p,r[0])&&!r.slice(1).some(h=>pointInRing(p,h)));return false;}
+
+export type AccessCoverage={places:number;documented:number;toilets:number;toiletsDocumented:number;elevators:number;snapshot:string};
+
+// The pitch for this app is a measurement, not an adjective: count how little of Daejeon's
+// accessibility is actually written down, straight from the dataset we ship.
+export function accessCoverage(data:CityData):AccessCoverage{
+ const places=data.places;
+ const toilets=places.filter(p=>p.category==='toilet');
+ return {
+  places:places.length,
+  documented:places.filter(p=>p.wheelchair!=='unknown').length,
+  toilets:toilets.length,
+  toiletsDocumented:toilets.filter(p=>p.toiletWheelchair==='yes').length,
+  elevators:places.filter(p=>p.facilities?.includes('elevator')).length,
+  snapshot:data.snapshot,
+ };
+}
