@@ -14,7 +14,7 @@ export default function SceneWorkspace({onPlaces}:{onPlaces:()=>void}){
  function changeMode(value:boolean){setIsolated(value);setPlaying(false);setTime(0);}
  const stage=time<6?'버스가 정류장으로 이동해요':time<21?'휠체어 여행자가 횡단 구간을 지나가요':time<31?'공원 길을 따라 이동해요':time<41?'잠시 둘러보고 돌아가요':'광장으로 돌아오는 길이에요';
  return <div className="city-app">
-  <header className="city-header"><a href="/" className="city-brand"><img src="/icon-192.png" alt=""/><strong>갈수있슈<span>모두의 이동을 위한 지도</span></strong></a><nav aria-label="화면 선택"><button className="chosen" aria-current="page">3D 둘러보기</button><button onClick={onPlaces}>대전 장소·길찾기 ↗</button></nav><span className="city-region">대전 <span>·</span> 미니어처 작업 공간</span></header>
+  <header className="city-header"><a href="/" className="city-brand"><img src="/brand/mark-128.png" alt=""/><strong>갈수있슈<span>모두의 이동을 위한 지도</span></strong></a><nav aria-label="화면 선택"><button className="chosen" aria-current="page">3D 둘러보기</button><button onClick={onPlaces}>대전 장소·길찾기 ↗</button></nav><span className="city-region">대전 <span>·</span> 미니어처 작업 공간</span></header>
   <main className="city-layout">
    <aside className={'city-panel '+(sheet?'expanded':'')} aria-label="3D 부품 살펴보기">
     <button className="city-sheet-handle" onClick={()=>setSheet(!sheet)} aria-expanded={sheet}>{sheet?'접기 ↓':'부품과 상세 정보 보기 ↑'}</button>

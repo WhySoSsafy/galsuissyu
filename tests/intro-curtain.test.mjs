@@ -9,10 +9,28 @@ const explorer = readFileSync('src/CityExplorer.tsx', 'utf8');
 const css = readFileSync('src/experience.css', 'utf8');
 
 test('a film dropped in at the documented path is used without a code change', () => {
-  assert.match(intro, /const VIDEO='\/assets\/intro\.mp4'/);
-  assert.ok(existsSync('public/assets/INTRO.md'), 'the swap has to be written down for whoever makes the film');
-  const doc = readFileSync('public/assets/INTRO.md', 'utf8');
+  assert.match(intro, /const VIDEO='\/film\/intro\.mp4'/);
+  assert.ok(existsSync('docs/INTRO-FILM.md'), 'the swap has to be written down for whoever makes the film');
+  const doc = readFileSync('docs/INTRO-FILM.md', 'utf8');
   assert.ok(doc.includes('intro.mp4'), 'the document names the file it is asking for');
+  assert.ok(doc.includes('public/film/'), 'and says where it goes');
+});
+
+test('the film is not served from the year-immutable path', () => {
+  // It was, and it cost the whole opening in production. /assets/ is served
+  // `max-age=31536000, immutable` for Vite's content-hashed bundles. intro.mp4 has a fixed name, so
+  // a browser that requested it before it shipped got the SPA fallback — index.html — and cached
+  // that HTML under this URL for a year. The <video> then failed with DEMUXER_ERROR_COULD_NOT_OPEN
+  // and the placeholder stood in, on a URL no redeploy could ever correct.
+  assert.ok(!intro.includes('/assets/intro'), 'the film has a path of its own');
+  assert.ok(existsSync('public/film/intro.mp4'), 'and the file is there to be shipped');
+
+  const vercel = JSON.parse(readFileSync('vercel.json', 'utf8'));
+  const rule = (vercel.headers ?? []).find((h) => h.source.startsWith('/film/'));
+  assert.ok(rule, 'the fixed-name film states its own cache policy');
+  const cache = rule.headers.find((h) => h.key === 'Cache-Control').value;
+  assert.ok(!cache.includes('immutable'), `a file whose name never changes cannot be immutable: ${cache}`);
+  assert.match(cache, /must-revalidate/, 'a replacement film has to be able to reach people');
 });
 
 test('only a real media error falls through to the placeholder', () => {

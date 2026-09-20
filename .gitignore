@@ -11,6 +11,15 @@ dist/
 # Git will not descend into an excluded directory, so the path down to the one file we do keep has
 # to be opened level by level.
 /public/*
+!/public/brand/
+/public/brand/*
+!/public/brand/mark-16.png
+!/public/brand/mark-32.png
+!/public/brand/mark-64.png
+!/public/brand/mark-128.png
+!/public/brand/mark-180.png
+!/public/brand/mark-192.png
+!/public/brand/mark-256.png
 !/public/data/
 /public/data/*
 !/public/data/tour-places.json
@@ -27,8 +36,11 @@ dist/
 !/public/assets/survey/vision.webp
 !/public/assets/survey/hearing.webp
 # The opening film. It is not in the restore manifest, so without these it simply would not exist
-# in a deployed build and the drawn placeholder would stand in for it.
-!/public/assets/intro.mp4
-!/public/assets/intro-poster.jpg
+# in a deployed build and the drawn placeholder would stand in for it. It lives outside /assets/
+# because that path is served immutable for a year, and its name never changes.
+!/public/film/
+/public/film/*
+!/public/film/intro.mp4
+!/public/film/intro-poster.jpg
 /research/
 .vercel

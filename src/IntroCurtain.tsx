@@ -3,14 +3,19 @@ import {useEffect,useRef,useState} from 'react';
 // The first thing a visitor meets: a film about a family travelling together, including the people
 // who usually get left at home.
 //
-// Replacing the film: put intro.mp4 (and optionally intro-poster.jpg) in public/assets/. It is used
+// Replacing the film: put intro.mp4 (and optionally intro-poster.jpg) in public/film/. It is used
 // automatically, the drawn placeholder stops rendering, and everything after it is unchanged.
+//
+// It lives in /film/ rather than /assets/. Everything under /assets/ is served immutable for a year,
+// which is right for Vite's hashed bundles and wrong for a file whose name never changes: a browser
+// that once asked for it before it existed got the SPA's index.html back and cached that HTML under
+// this URL for a year, so the film would never load for that visitor again.
 //
 // It does not start on its own. A page nobody has touched is not allowed to make noise, so an
 // autoplaying film would have to be silent; asking for a press first means the press is the gesture
 // the browser wants, and the film can be heard.
-const VIDEO='/assets/intro.mp4';
-const POSTER='/assets/intro-poster.jpg';
+const VIDEO='/film/intro.mp4';
+const POSTER='/film/intro-poster.jpg';
 
 // Timed to what is on screen:
 //   0.0  four of them set out together — grandmother with a cane, a stroller

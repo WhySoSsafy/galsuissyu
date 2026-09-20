@@ -97,7 +97,7 @@ React · MapLibre GL · Three.js · Vite. 지도 타일과 경로 엔진은 **�
 | [docs/DATA-USE.md](docs/DATA-USE.md) | 공사 OpenAPI 활용 증빙 |
 | [docs/COLLABORATION.md](docs/COLLABORATION.md) | 개발 환경·브랜치·모형 규격 |
 | [docs/DEVELOPMENT-LOG.md](docs/DEVELOPMENT-LOG.md) | 데이터 수집 절차, 원천·라이선스, 작업 기록 |
-| [public/assets/INTRO.md](public/assets/INTRO.md) | 소개 영상 교체 방법 |
+| [docs/INTRO-FILM.md](docs/INTRO-FILM.md) | 소개 영상 교체 방법 |
 
 ## 출처와 라이선스
 
