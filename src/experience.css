@@ -305,3 +305,5 @@
  .survey-cards small{align-self:start;margin-top:4px}
  .survey-check{top:50%;transform:translateY(-50%);right:8px}
 }
+.transit-recorded button{display:block;margin-top:8px;font:inherit;font-size:12px;color:#8a5a2d;background:none;border:0;padding:4px 0;min-height:32px;text-decoration:underline;cursor:pointer}
+.transit-recorded button:disabled{opacity:.5;cursor:default}

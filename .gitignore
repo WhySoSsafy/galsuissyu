@@ -24,6 +24,9 @@ dist/
 /public/data/*
 !/public/data/tour-places.json
 !/public/data/bus-stops.json
+# Real provider answers for the journeys people ask for, so the simulation does not depend on
+# someone else's uptime or on an allowance that runs out mid-session.
+!/public/data/recorded-routes.json
 !/public/assets/
 /public/assets/*
 !/public/assets/survey/

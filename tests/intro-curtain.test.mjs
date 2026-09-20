@@ -120,8 +120,7 @@ test('a run that never arrives gives the screen back', () => {
   const transit = readFileSync('src/TransitOptions.tsx', 'utf8');
   assert.match(transit, /onAutoRunDone\?:\(played:boolean\)=>void/, 'the run reports whether it played');
   assert.match(transit, /onAutoRunDone\?\.\(!!playable\)/, 'including when the search came back empty');
-  assert.match(transit, /content-type'\)\?\.includes\('json'\)/,
-    'and a missing recording is the single-page fallback, not a recording');
+  assert.match(transit, /onAutoRunDone\?\.\(played\)/, 'and when a recorded journey played instead');
   assert.match(explorer, /onAutoRunDone=\{demoFinished\}/);
   assert.match(explorer, /if\(played\|\|!showcase\)return;/);
   assert.match(explorer, /setShowcase\(false\);setPanelOpen\(true\)/, 'the panel comes back with the reason on it');
