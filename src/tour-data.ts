@@ -10,12 +10,14 @@ export type TourSnapshot={source:string;services:string[];license:string;areaCod
 // Who a trip has to work for. The barrier-free record answers these in separate blocks, so a group
 // maps to the blocks a companion actually needs rather than to a diagnosis.
 export type Companion='senior'|'stroller'|'wheelchair'|'vision'|'hearing';
-export const companions:{key:Companion;label:string;help:string;sections:(keyof BarrierFree)[]}[]=[
- {key:'senior',label:'어르신과 함께',help:'계단·경사와 쉴 곳, 저상버스 안내를 먼저 봐요.',sections:['getIn','moveAround']},
- {key:'stroller',label:'유아차와 함께',help:'출입 통로, 수유실, 유아용 의자 안내를 봐요.',sections:['getIn','family']},
- {key:'wheelchair',label:'휠체어로 이동',help:'출입구·승강기·장애인 화장실 안내를 봐요.',sections:['getIn','moveAround']},
- {key:'vision',label:'시각 안내가 필요해요',help:'점자블록, 음성 안내, 큰 글씨 안내를 봐요.',sections:['vision']},
- {key:'hearing',label:'청각 안내가 필요해요',help:'수어·영상 안내와 청각 보조 설비를 봐요.',sections:['hearing']},
+// `image` names a file under /assets/survey/. A missing one is hidden by the card rather than
+// left as a broken frame, so the step still works before every illustration exists.
+export const companions:{key:Companion;label:string;help:string;image:string;sections:(keyof BarrierFree)[]}[]=[
+ {key:'senior',label:'어르신과 함께',help:'계단·경사와 쉴 곳을 먼저 봐요.',image:'rest',sections:['getIn','moveAround']},
+ {key:'stroller',label:'유아차와 함께',help:'출입 통로와 수유실을 봐요.',image:'stroller',sections:['getIn','family']},
+ {key:'wheelchair',label:'휠체어로 이동',help:'출입구·승강기·화장실을 봐요.',image:'wheelchair',sections:['getIn','moveAround']},
+ {key:'vision',label:'시각 안내가 필요해요',help:'점자블록과 음성 안내를 봐요.',image:'vision',sections:['vision']},
+ {key:'hearing',label:'청각 안내가 필요해요',help:'수어·영상 안내를 봐요.',image:'hearing',sections:['hearing']},
 ];
 
 export const sectionLabels:Record<keyof BarrierFree,string>={getIn:'도착과 출입',moveAround:'내부 이동',vision:'시각 안내',hearing:'청각 안내',family:'영유아 동반'};
