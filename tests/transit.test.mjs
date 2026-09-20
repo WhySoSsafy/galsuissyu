@@ -7,3 +7,12 @@ test('normalizes walking, subway and bus without claiming accessibility',()=>{co
 test('empty and provider-error results differ',()=>{assert.deepEqual(normalizePaths({result:{path:[]}}),[]);assert.throws(()=>normalizePaths({error:{code:-99}}),/찾지 못/);assert.throws(()=>normalizePaths({}),/응답/);});
 test('provider key stays in server request, domain credentials are attached, and neither leaks',async()=>{let upstream,options;const r=await handleTransit(req('routes',body),{ODSAY_API_KEY:'test-secret',ODSAY_SERVICE_URI:'example.test'},async(u,o)=>{upstream=u;options=o;return Response.json({result:{path:[]}});});assert.equal(upstream.searchParams.get('apiKey'),'test-secret');assert.equal(upstream.searchParams.get('SearchPathType'),'0');assert.equal(options.headers.Referer,'https://example.test/');assert.equal(options.headers.Origin,'https://example.test');const response=await r.text();assert.ok(!response.includes('test-secret'));assert.ok(!response.includes('example.test'));});
 test('geometry preserves lane and section order, including a single-section mapObj',async()=>{let upstream;const r=await handleTransit(req('geometry',{mapObj:'30001:2:30104:30111'}),{ODSAY_API_KEY:'test'},async u=>{upstream=u;return Response.json({result:{lane:[{class:2,section:[{graphPos:[{x:127.4,y:36.3},{x:127.41,y:36.31}]},{graphPos:[{x:127.42,y:36.32},{x:127.43,y:36.33}]}]}]}});});const data=await r.json();assert.equal(upstream.searchParams.get('mapObject'),'0:0@30001:2:30104:30111');assert.equal(data.features.length,2);assert.deepEqual(data.features.map(f=>f.properties),[{mode:'subway',order:0,section:0},{mode:'subway',order:0,section:1}]);});
+test('account-level failures arrive as an array and are named, not blamed on the route',()=>{
+ try{normalizePaths({error:[{code:'429',message:'Daily quota exceeded'}]});assert.fail('should throw');}
+ catch(e){assert.equal(e.code,'QUOTA');assert.equal(e.status,429);assert.match(e.message,/한도/);}
+ try{normalizePaths({error:[{code:'401',message:'Unauthorized'}]});assert.fail('should throw');}
+ catch(e){assert.equal(e.code,'AUTH');}
+ // the object shape the provider uses for routing failures still reads the same way
+ try{normalizePaths({error:{code:'-98'}});assert.fail('should throw');}
+ catch(e){assert.equal(e.code,'-98');assert.match(e.message,/찾지 못/);}
+});

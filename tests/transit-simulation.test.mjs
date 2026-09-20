@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {build} from 'esbuild';
 const bundled=await build({entryPoints:['src/transit-simulation.ts'],bundle:true,write:false,format:'esm',platform:'node'});
-const {transitPoint,transitStatus,nameWalkLegs,legSpan}=await import('data:text/javascript;base64,'+Buffer.from(bundled.outputFiles[0].text).toString('base64'));
+const {transitPoint,transitStatus,nameWalkLegs,legSpan,withWalkPaths,walkLegEndpoints}=await import('data:text/javascript;base64,'+Buffer.from(bundled.outputFiles[0].text).toString('base64'));
 const bus={id:'b',mode:'bus',line:'101',start:'A',end:'B',minutes:10,coordinates:[[127.38,36.35],[127.39,36.35]],startProgress:0,endProgress:.5};
 const train={...bus,id:'t',mode:'subway',line:'1호선',startProgress:.5,endProgress:1,coordinates:[[127.39,36.35],[127.4,36.35]]};
 const simulation={segments:[bus,train]};
@@ -61,4 +61,36 @@ test('a walk bounded by one place reads as movement inside it, not a loop',()=>{
  assert.equal(legSpan('대전역','정부청사'),'대전역 → 정부청사');
  assert.equal(legSpan(null,'정부청사'),'구간 정보 미확인');
  assert.equal(legSpan('대전역',null),'구간 정보 미확인');
+});
+
+const walkSim={
+ totalMinutes:20,
+ segments:[
+  {id:'w1',mode:'walk',line:'',start:'대전역',end:'대전역',minutes:5,coordinates:[[127.43,36.33],[127.44,36.34]],startProgress:0,endProgress:.25},
+  {id:'b1',mode:'bus',line:'3',start:'대전역',end:'정부청사',minutes:10,coordinates:[[127.44,36.34],[127.40,36.36]],startProgress:.25,endProgress:.75},
+  {id:'w2',mode:'walk',line:'',start:'정부청사',end:'한빛탑',minutes:5,coordinates:[[127.40,36.36],[127.39,36.37]],startProgress:.75,endProgress:1},
+ ],
+ coordinates:[],route:{legs:[]},
+};
+
+test('walk legs take the real footpath and the run is re-timed around it',()=>{
+ const legs=walkLegEndpoints(walkSim);
+ assert.deepEqual(legs,[
+  {from:[127.43,36.33],to:[127.44,36.34]},
+  {from:[127.40,36.36],to:[127.39,36.37]},
+ ],'endpoints are handed over in walk order');
+ const detour=[[127.43,36.33],[127.435,36.332],[127.44,36.34]];
+ const out=withWalkPaths(walkSim,[detour,null]);
+ assert.deepEqual(out.segments[0].coordinates,detour,'the routed path replaces the straight line');
+ assert.deepEqual(out.segments[2].coordinates,walkSim.segments[2].coordinates,'an unroutable leg keeps its own line');
+ assert.equal(out.segments[1].coordinates.length,2,'ride geometry is untouched');
+ assert.equal(out.segments[0].minutes,5,"the provider's own timing is kept");
+ const bounds=out.segments.map(s=>[s.startProgress,s.endProgress]);
+ assert.equal(bounds[0][0],0);assert.equal(bounds.at(-1)[1],1);
+ for(let i=1;i<bounds.length;i++)assert.equal(bounds[i][0],bounds[i-1][1],'progress stays continuous');
+});
+
+test('nothing changes when the walking network answers with nothing usable',()=>{
+ assert.equal(withWalkPaths(walkSim,[null,null]),walkSim);
+ assert.equal(withWalkPaths(walkSim,[[[127.43,36.33]],null]),walkSim,'a single point is not a path');
 });

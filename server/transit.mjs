@@ -3,7 +3,16 @@ export class TransitError extends Error{constructor(code,message,status=502){sup
 const coord=p=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite)&&p[0]>=127.21&&p[0]<=127.58&&p[1]>=36.15&&p[1]<=36.54;
 const num=v=>v!==null&&v!==''&&Number.isFinite(Number(v))?Number(v):null;
 export function normalizePaths(data){
- if(data.error){const code=String(data.error.code);throw new TransitError(code,['-99','-98','3','4','5'].includes(code)?'이 구간의 대중교통 경로를 찾지 못했어요. 가까운 지점은 보행 경로를 확인해 주세요.':'교통 정보 제공처에서 조회를 완료하지 못했어요.',422);}
+ // ODsay reports failures as an object for routing errors but as an array for account-level ones
+ // (quota, key). Reading only the object shape turned "Daily quota exceeded" into an undefined code
+ // and a message that blamed the route.
+ const fault=Array.isArray(data.error)?data.error[0]:data.error;
+ if(fault){
+  const code=String(fault.code??'UNKNOWN');
+  if(['429','-8','8'].includes(code))throw new TransitError('QUOTA','대중교통 조회 한도를 모두 사용했어요. 내일 다시 이용하거나 보행 경로를 확인해 주세요.',429);
+  if(['401','-9','9','-1','1'].includes(code))throw new TransitError('AUTH','대중교통 정보 연결 설정을 확인해야 해요.',502);
+  throw new TransitError(code,['-99','-98','3','4','5'].includes(code)?'이 구간의 대중교통 경로를 찾지 못했어요. 가까운 지점은 보행 경로를 확인해 주세요.':'교통 정보 제공처에서 조회를 완료하지 못했어요.',422);
+ }
  if(data.result?.searchType&&data.result.searchType!==0)throw new TransitError('UNSUPPORTED','현재 대전 시내 경로만 지원해요.',422);
  if(!data.result||!Array.isArray(data.result.path))throw new TransitError('INVALID_RESPONSE','교통 정보 응답을 확인하지 못했어요.');
  if(data.result.path.some(p=>!Array.isArray(p.subPath)||p.subPath.some(s=>![1,2,3].includes(s.trafficType))))throw new TransitError('INVALID_RESPONSE','이동 수단 정보를 확인하지 못했어요.');

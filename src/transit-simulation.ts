@@ -26,6 +26,31 @@ export function nameWalkLegs(route:TransitRoute,originName:string,destinationNam
 
 // A walk that starts and ends at the same named place is movement inside it — the station concourse,
 // the bus stop forecourt — and "대전역 → 대전역" reads like a mistake.
+// The walk between a stop and the next one was drawn as a straight line, which sent the traveller
+// through rail yards and across rivers. Given real paths from the walking network, swap them in and
+// re-time the run; a leg the network could not connect keeps its straight line.
+export function withWalkPaths(simulation:TransitSimulation,paths:(Coordinate[]|null)[]):TransitSimulation{
+ let index=0,changed=false;
+ const drafts=simulation.segments.map(segment=>{
+  if(segment.mode!=='walk')return segment;
+  const path=paths[index++];
+  if(!path||path.length<2)return segment;
+  changed=true;
+  // Keep the provider's own timing for the leg; only the shape it takes on the map changes.
+  return {...segment,coordinates:path};
+ });
+ if(!changed)return simulation;
+ const totalMinutes=Math.max(1,drafts.reduce((sum,s)=>sum+s.minutes,0));
+ let elapsed=0;
+ const segments=drafts.map(s=>{const startProgress=elapsed/totalMinutes;elapsed+=s.minutes;return {...s,startProgress,endProgress:elapsed/totalMinutes};});
+ return {...simulation,segments,coordinates:join(segments.map(s=>s.coordinates)),totalMinutes};
+}
+
+// The endpoints of each walk leg, in the order withWalkPaths expects them back.
+export function walkLegEndpoints(simulation:TransitSimulation){
+ return simulation.segments.filter(s=>s.mode==='walk').map(s=>({from:s.coordinates[0],to:s.coordinates.at(-1)!}));
+}
+
 export function legSpan(start:string|null,end:string|null){
  if(!start||!end)return '구간 정보 미확인';
  return start===end?`${start} 안에서 이동`:`${start} → ${end}`;
