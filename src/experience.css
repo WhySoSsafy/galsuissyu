@@ -16,11 +16,11 @@
 .survey-companions [aria-pressed=true] .survey-check{color:#fff;background:#ce6b51;border-color:#ce6b51}
 .survey-companion-note{grid-column:1/-1;font-size:12px!important;color:#8a959d!important;margin-top:2px}
 .transit-recorded{font-size:12px!important;line-height:1.7!important;color:#7b6a4c!important;background:#fbf5e8;border:1px solid #e8dcc2;border-radius:9px;padding:9px 11px;margin-top:10px}
-.low-floor{display:inline-block;font-style:normal;font-size:11px;font-weight:600;margin-left:7px;padding:3px 7px;border-radius:5px;background:#e7f1ea;color:#356b52;white-space:nowrap;vertical-align:middle}
+.low-floor{display:inline-block;font-style:normal;font-size:11px;font-weight:600;margin-left:7px;padding:3px 7px;border-radius:5px;background:#e7f1ea;color:#28485b;white-space:nowrap;vertical-align:middle}
 .tour-access{border:1px solid #dbe6e0;border-radius:14px;padding:16px;margin:18px 0;background:#f8fbf9}
 .tour-access-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .tour-access h3{font-size:15px;margin:0}
-.tour-access-badge{font-size:11.5px;color:#41705c;background:#e6f2ea;border-radius:6px;padding:5px 8px;white-space:nowrap}
+.tour-access-badge{font-size:11.5px;color:#28485b;background:#e6f2ea;border-radius:6px;padding:5px 8px;white-space:nowrap}
 .tour-access-badge.is-empty{color:#8a7a5c;background:#f5efe2}
 .tour-access-groups{margin-top:12px;display:grid;gap:10px}
 .tour-access-group{border:1px solid #e6ece8;border-radius:11px;background:#fff;padding:12px 13px}
@@ -36,7 +36,7 @@
 .tour-access-note strong{color:#4d6b5c}
 .tour-access-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 .tour-report,.tour-source{flex:1;min-width:130px;text-align:center;min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:10px;font-size:13px;text-decoration:none}
-.tour-report{background:#2f6b52;color:#fff}
+.tour-report{background:#28485b;color:#fff}
 .tour-source{border:1px solid #cddcd4;color:#4d6b5c}
 .tour-report-help{display:block;font-size:11.5px;line-height:1.7;color:#8a968f;margin-top:9px}
 .dj-districts button.active{background:#28485b}
@@ -55,9 +55,26 @@
 .map-place-close{width:30px;height:30px;font-size:20px;color:#8a978e;background:transparent;border:0;flex-shrink:0}
 .map-place-actions{display:flex;gap:7px;margin-top:12px}
 .map-place-actions button{flex:1;min-height:42px;border-radius:9px;font-size:14px;font-weight:650;border:1px solid #d6e2d9}
-.map-place-actions .as-start{background:#3f6b55;color:#fff;border-color:#3f6b55}
+.map-place-actions .as-start{background:#28485b;color:#fff;border-color:#28485b}
 .map-place-actions .as-end{background:#ce6b51;color:#fff;border-color:#ce6b51}
 .map-place-actions .as-detail{background:#f4f7f3;color:#4f6558}
+.dj-detail-pane{position:absolute;z-index:8;top:0;bottom:0;width:390px;max-width:calc(100vw - 100px);background:#fff;border-left:1px solid #e3e8ea;box-shadow:12px 0 36px #1d354522;display:flex;flex-direction:column}
+.daejeon-app:not(.panel-collapsed) .dj-detail-pane{left:432px}
+.daejeon-app.panel-collapsed .dj-detail-pane{left:72px}
+.dj-detail-head{display:flex;align-items:center;gap:8px;padding:14px 12px 14px 8px;border-bottom:1px solid #edf0f1;flex-shrink:0}
+.dj-detail-head strong{flex:1;min-width:0;font-size:17px;line-height:1.4;color:#24384a;word-break:keep-all}
+.dj-detail-back,.dj-detail-close{width:36px;height:36px;flex-shrink:0;font-size:22px;color:#7d8c95;background:transparent;border:0}
+.dj-detail-scroll{flex:1;min-height:0;overflow-y:auto;padding:16px 18px 30px;scrollbar-width:thin}
+.dj-detail-actions{display:flex;gap:8px;margin-bottom:6px}
+.dj-detail-actions button,.dj-row-actions button{min-height:40px;border-radius:9px;font-size:13px;font-weight:650;border:1px solid #d3dde2;background:#fff;color:#33566b}
+.dj-detail-actions button{flex:1;min-height:44px;font-size:14px}
+.dj-detail-actions .is-end,.dj-row-actions .is-end{background:#ce6b51;border-color:#ce6b51;color:#fff}
+.dj-detail-pane .dj-place-detail{border-top:0;padding-top:0;margin-top:0}
+.dj-place-row{display:flex;align-items:center;gap:8px;border-bottom:1px solid #ebeee6}
+.dj-place-row.is-open{background:#f5f8fa}
+.dj-place-main{flex:1;min-width:0;display:flex;align-items:center;gap:11px;padding:15px 0;text-align:left;background:transparent;border:0}
+.dj-row-actions{display:flex;gap:5px;flex-shrink:0}
+.dj-row-actions button{padding:0 11px}
 .dj-panel-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:12px;padding:4px;background:#f1f3ef;border-radius:11px}
 .dj-panel-tabs button{min-height:40px;border-radius:8px;font-size:14px;color:#6c7c72;background:transparent;border:0;font-weight:600}
 .dj-panel-tabs button[aria-selected=true]{background:#fff;color:#2c4433;box-shadow:0 1px 4px #26402e1a}
