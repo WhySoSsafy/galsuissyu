@@ -144,14 +144,11 @@
 .dj-map-stage.simulation-active .map-tile-loading,.dj-map-stage.simulation-active .dj-pilot-loading.is-routine,.dj-map-stage.simulation-active .dj-map-caption{display:none}
 .transit-status-banner{pointer-events:none;padding:8px 13px;border:2px solid #fff;border-radius:18px;background:#236e9c;color:#fff;box-shadow:0 4px 16px #17334b30;font-size:14px;font-weight:700;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis}
 .transit-status-banner.mode-subway{background:#6d50a8}.transit-status-banner.mode-walk{background:#497c71}.transit-status-banner.phase-boarding,.transit-status-banner.phase-alighting{border-color:#ffda86}
-.journey-arrival{position:absolute;z-index:7;top:128px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;max-width:calc(100% - 32px);padding:14px 16px;background:#fff;border:1px solid #b9dcd0;border-radius:18px;box-shadow:0 12px 36px #21473a25;animation:arrival-enter .4s ease-out}
-.arrival-check{display:grid;place-items:center;flex-shrink:0;width:42px;height:42px;border-radius:50%;background:#148364;color:white;font-size:26px}
-.journey-arrival>div{display:flex;flex-direction:column;gap:4px;min-width:0}.journey-arrival strong{font-size:18px;color:#1c5547}.journey-arrival div>span{font-size:14px;color:#586c65;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.journey-arrival button{width:44px;height:44px;flex-shrink:0;font-size:24px;color:#536b62}
 .arrival-map-marker{width:64px;height:64px;pointer-events:none;display:grid;place-items:center}.arrival-map-marker>b{display:grid;place-items:center;z-index:1;width:48px;height:48px;background:#148364;color:white;border:4px solid white;border-radius:50%;box-shadow:0 4px 20px #123c4d40;font-size:28px}.arrival-map-pulse{position:absolute;inset:0;border:3px solid #36b58b;background:#36b58b25;border-radius:50%;animation:arrival-ripple 1.5s ease-out 3 forwards}
 @keyframes arrival-ripple{0%{transform:scale(.7);opacity:.9}100%{transform:scale(2.6);opacity:0}}
 @keyframes arrival-enter{from{opacity:0;translate:0 -12px}to{opacity:1;translate:0 0}}
-@media(min-width:741px){.daejeon-app:not(.panel-collapsed) .journey-arrival{left:calc(50% + 180px);max-width:calc(100% - 410px)}}
-@media(max-width:740px){.journey-arrival{top:88px;width:calc(100% - 32px);box-sizing:border-box;padding:10px 12px}.journey-arrival strong{font-size:16px}.transit-status-banner{top:var(--search-bottom);font-size:13px;padding:7px 10px;max-width:calc(100% - 120px)}}
+@media(min-width:741px){}
+@media(max-width:740px){.transit-status-banner{top:var(--search-bottom);font-size:13px;padding:7px 10px;max-width:calc(100% - 120px)}}
 @media(prefers-reduced-motion:reduce){.journey-arrival,.arrival-map-pulse{animation:none}.arrival-map-pulse{opacity:0}}
 
 .intro-curtain{position:fixed;inset:0;z-index:200;background:#1d3545;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden}
@@ -211,12 +208,7 @@
 .showcase-exit{position:absolute;z-index:7;right:20px;top:22px}
 .showcase-exit button{min-height:44px;padding:0 18px;border-radius:12px;border:1px solid #ffffff3d;background:#1d3545e0;color:#fff;font-size:14px;font-weight:650;backdrop-filter:blur(8px)}
 .showcase-exit button:hover{background:#28485b}
-.arrival-head{display:flex;align-items:flex-start;gap:10px}
-.arrival-close{width:32px;height:32px;flex-shrink:0;font-size:20px;background:transparent;border:0;color:#68766e}
-.arrival-actions{display:flex;gap:7px;margin-top:12px;flex-wrap:wrap}
-.arrival-actions button{flex:1;min-width:104px;min-height:44px;border-radius:10px;border:1px solid #d3dde2;background:#fff;color:#33566b;font-size:13px;font-weight:650}
-.arrival-actions .arrival-primary{background:#28485b;border-color:#28485b;color:#fff}
-@media(max-width:740px){.showcase-exit{right:12px;top:calc(10px + env(safe-area-inset-top,0px))}.arrival-actions button{min-width:0;font-size:12px}}
+@media(max-width:740px){.showcase-exit{right:12px;top:calc(10px + env(safe-area-inset-top,0px))}}
 .dj-intro-link{margin-left:auto;min-height:42px;padding:0 16px;border-radius:11px;border:1px solid #d6dfe4;background:#fff;color:#2c4557;font-size:13.5px;font-weight:650;white-space:nowrap}
 .dj-intro-link:hover{background:#f2f5f7;border-color:#b9c8d1}
 @media(max-width:740px){.dj-intro-link{display:none}}
@@ -307,3 +299,54 @@
 }
 .transit-recorded button{display:block;margin-top:8px;font:inherit;font-size:12px;color:#8a5a2d;background:none;border:0;padding:4px 0;min-height:32px;text-decoration:underline;cursor:pointer}
 .transit-recorded button:disabled{opacity:.5;cursor:default}
+
+/* ── 도착 ─────────────────────────────────────────────────────────────────────
+   The end of the run, and the point of the whole thing. It used to be a strip saying a preview had
+   finished, laid out by two rulesets that disagreed: an outer flex row from an older design pulled
+   the heading and the buttons alongside each other and wrapped every label. It is a card now, and
+   it states what the journey showed rather than that it ended. */
+.journey-arrival{position:absolute;z-index:8;top:50%;left:50%;transform:translate(-50%,-50%);
+ width:370px;max-width:calc(100% - 32px);box-sizing:border-box;padding:26px 26px 22px;
+ max-height:calc(100% - 24px);overflow-y:auto;overscroll-behavior:contain;
+ background:#fff;border-radius:20px;border:1px solid #e4eae6;box-shadow:0 24px 70px #16302840;
+ animation:arrival-card .42s cubic-bezier(.16,.84,.44,1) both}
+.arrival-close{position:absolute;z-index:2;right:10px;top:10px;display:grid;place-content:center;
+ width:40px;height:40px;padding:0;border:0;border-radius:10px;background:transparent;
+ font-size:22px;line-height:1;color:#8b968f;cursor:pointer}
+.arrival-close:hover{background:#00000010}
+.arrival-eyebrow{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#2f7d5e;letter-spacing:.01em}
+.arrival-check{display:grid;place-content:center;flex-shrink:0;width:22px;height:22px;border-radius:50%;
+ background:#2f7d5e;color:#fff;font-size:13px;line-height:1;
+ animation:arrival-tick .5s .12s cubic-bezier(.16,.84,.44,1) both}
+.arrival-title{display:block;margin-top:10px;font-size:25px;line-height:1.38;letter-spacing:-.9px;color:#1d3b31;word-break:keep-all}
+
+.arrival-measures{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.arrival-measures>div{flex:1 1 76px;padding:11px 12px;border-radius:12px;background:#f3f7f4;border:1px solid #e6ede8}
+.arrival-measures dt{font-size:17px;font-weight:750;letter-spacing:-.4px;color:#22453a;white-space:nowrap}
+.arrival-measures dd{margin-top:3px;font-size:11.5px;color:#6d7d75;white-space:nowrap}
+
+.arrival-companion{margin-top:14px;font-size:13px;line-height:1.7;color:#4f6a5c;word-break:keep-all}
+.arrival-caveat{margin-top:12px;padding-top:12px;border-top:1px solid #edf1ee;font-size:11.5px;line-height:1.75;color:#7d8a83;word-break:keep-all}
+
+.arrival-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:16px}
+.arrival-actions button{flex:1 1 auto;min-height:44px;padding:10px 14px;border-radius:11px;
+ border:1px solid #d7e0da;background:#fff;color:#375a4a;font:inherit;font-size:13px;font-weight:650;
+ white-space:nowrap;cursor:pointer}
+.arrival-actions button:hover{background:#f5f8f6}
+.arrival-actions .arrival-primary{flex-basis:100%;background:#28485b;border-color:#28485b;color:#fff}
+.arrival-actions .arrival-primary:hover{background:#1d3a4b}
+
+@keyframes arrival-card{from{opacity:0;transform:translate(-50%,-46%) scale(.965)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes arrival-tick{from{transform:scale(0)}60%{transform:scale(1.25)}to{transform:scale(1)}}
+
+/* With the panel open the map's centre is not the screen's centre. */
+@media(min-width:741px){.daejeon-app:not(.panel-collapsed) .journey-arrival{left:calc(50% + 180px)}}
+@media(max-width:740px){
+ .journey-arrival{width:calc(100% - 28px);padding:22px 20px 18px}
+ .arrival-title{font-size:21px}
+ .arrival-measures{gap:6px}
+ .arrival-measures>div{flex-basis:70px;padding:9px 10px}
+ .arrival-measures dt{font-size:15px}
+ .arrival-actions button{font-size:12.5px}
+}
+@media(prefers-reduced-motion:reduce){.journey-arrival,.arrival-check{animation:none}}

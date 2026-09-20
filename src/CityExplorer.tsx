@@ -157,6 +157,16 @@ function choose(p:CityPlace){setPreview(false);setFollow(false);setPanelOpen(tru
   setPanelOpen(!focused);setShowcase(focused);setFollow(true);
   setAutoRun(n=>n+1);
  }
+ // What the run just showed, in the terms the arrival states it: a transit journey counts its
+ // rides, a walking route is one leg of its own.
+ const arrivalFacts=useMemo(()=>{
+  if(transitSimulation){
+   const r=transitSimulation.route;
+   return {minutes:r.minutes,transfers:Math.max(0,r.legs.filter(l=>l.mode!=='walk').length-1),walkDistance:r.walkDistance,fare:r.fare};
+  }
+  if(route)return {minutes:Math.round(route.minutes),transfers:null,walkDistance:Math.round(route.distance),fare:null};
+  return null;
+ },[transitSimulation,route]);
  // The film hands over to a cleared screen. If no run arrives — the provider is down, or its daily
  // allowance is gone — an empty map explains nothing, so the panel comes back with the reason on it.
  function demoFinished(played:boolean){
@@ -248,6 +258,7 @@ function choose(p:CityPlace){setPreview(false);setFollow(false);setPanelOpen(tru
    <section id="dj-map-region" tabIndex={-1} className={'dj-map-stage'+(simulationEngaged?' simulation-active':'')+(chipsOpen?' chips-open':'')} aria-label="대전 전역 탐색"><button className="sidebar-toggle" aria-controls="journey-sidebar" aria-expanded={panelOpen} aria-label={panelOpen?'사이드바 접기':'사이드바 펼치기'} onClick={()=>setPanelOpen(!panelOpen)}>{panelOpen?'‹':'›'}</button><DaejeonMap transitGeometry={transitGeometry} transitSimulation={transitSimulation} transitPlaying={transitPreview} transitProgress={transitProgress} focusedPins={!!query.trim()||category!=='all'} onEndpoint={mapEndpoint} terrainStrength={terrainStrength} onPilotState={setPilotState} onPilotPick={id=>{const p=getPilotPlace(data,id);if(p)choose(p);}} ref={view} places={mapPlaces} selected={selected?.id||''} from={from} to={to} route={route} preview={preview} progress={progress} follow={follow} wheelchair={prefs.wheelchair} onFollowChange={setFollow} onPick={choose} onPoint={c=>point(c)} onDetail={setDetailCount} onZoom={setZoom} onCompatibility={setCompat}/>
     {showcase&&<div className="showcase-exit"><button onClick={()=>{setShowcase(false);setPanelOpen(true);}}>지도 둘러보기 →</button></div>}
     <JourneyArrival arrived={!!((route&&progress>=1)||(transitSimulation&&transitProgress>=1))} destination={to?.name||'목적지'}
+     facts={arrivalFacts} companion={companion}
      onDetails={()=>{setShowcase(false);setPanelOpen(true);setPanelMode('route');setMobileMode('route');setSheetLevel('full');}}
      onExplore={()=>{setShowcase(false);setPanelOpen(true);setPanelMode('search');setMobileMode('search');setSheetLevel('half');search.current?.focus();}}
      onReplay={()=>{setTransitProgress(0);setProgress(0);if(transitSimulation)setTransitPreview(true);else setPreview(true);setFollow(true);}}/>
