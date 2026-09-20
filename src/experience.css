@@ -242,7 +242,7 @@
 /* ── 나에게 맞는 여행 준비 ──────────────────────────────────────────────────────
    Three picture questions. The box is one fixed size for all of them: it used to grow and shrink
    as the questions changed, which made the whole dialog jump under the cursor. */
-.mobility-survey{position:fixed;z-index:101;inset:50% auto auto 50%;transform:translate(-50%,-50%);display:grid;grid-template-columns:minmax(0,1fr) 300px;width:1000px;max-width:calc(100vw - 32px);height:min(648px,calc(100dvh - 32px));overflow:hidden;background:#fff;border-radius:24px;box-shadow:0 30px 120px #172c4544;color:#24394b;font-family:inherit}
+.mobility-survey{position:fixed;z-index:101;inset:50% auto auto 50%;transform:translate(-50%,-50%);display:grid;grid-template-columns:minmax(0,1fr) 300px;width:1000px;max-width:calc(100vw - 32px);height:min(672px,calc(100dvh - 32px));overflow:hidden;background:#fff;border-radius:24px;box-shadow:0 30px 120px #172c4544;color:#24394b;font-family:inherit}
 .survey-content{display:flex;flex-direction:column;min-height:0;padding:40px 36px 26px}
 .survey-head{display:flex;align-items:center;gap:20px;flex-shrink:0}
 .survey-head-art{flex-shrink:0;width:88px;height:88px;border-radius:20px;background:#f2f6f4;overflow:hidden;display:block}
@@ -269,11 +269,11 @@
 .survey-cards small{display:block;font-size:11.5px;line-height:1.55;color:#66757f;margin-top:5px;word-break:keep-all}
 .survey-cards-3 strong,.survey-cards-2 strong{font-size:15px}
 .survey-cards-3 small,.survey-cards-2 small{font-size:12.5px}
-.survey-cards-2 .survey-card-art{aspect-ratio:5/2}
+.survey-cards-2 .survey-card-art{aspect-ratio:auto;height:156px}
 .survey-check{position:absolute;right:8px;top:8px;width:23px;height:23px;border-radius:50%;display:grid;place-content:center;font-size:12px;color:#788792;border:1px solid #dbe1e4;background:#fff;z-index:1}
 .survey-cards [aria-pressed=true] .survey-check{color:#fff;background:#ce6b51;border-color:#ce6b51}
 
-.survey-note{background:#f4f7f9;padding:16px 18px;border-radius:12px;margin-top:14px}
+.survey-note{background:#f4f7f9;padding:14px 16px;border-radius:12px;margin-top:12px}
 .survey-note strong{font-size:14px}
 .survey-note p{font-size:13px;margin-top:7px}
 
@@ -283,7 +283,7 @@
 
 /* The panel faces the questions: its figure looks in towards them rather than off the screen. */
 .survey-art{background:#edf5f0;display:flex;flex-direction:column;justify-content:center;gap:26px;padding:30px 28px;overflow:hidden}
-.survey-art img{width:100%;mix-blend-mode:multiply;border-radius:20px}
+.survey-art img{width:100%;display:block}
 .survey-art img[hidden]{display:none}
 .survey-art strong{font-size:22px;line-height:1.55;letter-spacing:-.7px;word-break:keep-all;color:#24394b}
 .mobility-survey button:focus-visible,.mobility-survey input:focus-visible{outline:3px solid #387da3;outline-offset:3px}

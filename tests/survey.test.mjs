@@ -3,7 +3,7 @@
 // stated a figure nobody had context for yet. These pin the shape it was rebuilt into.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync, existsSync} from 'node:fs';
 
 const survey = readFileSync('src/MobilitySurvey.tsx', 'utf8');
 const explorer = readFileSync('src/CityExplorer.tsx', 'utf8');
@@ -46,6 +46,19 @@ test('the opening figure moved to where it makes sense', () => {
   assert.match(explorer, /dj-coverage/, 'the panel states it beside the places it counts');
   assert.match(explorer, /coverage\.documented\.toLocaleString\(\)/);
   assert.match(explorer, /coverage\.snapshot/, 'with its source and date');
+});
+
+test('every picture the survey asks for is shipped', () => {
+  // Missing files fail quietly: the slot renders as a grey box and the question loses the thing
+  // that made it readable at a glance.
+  // The companion pictures are named in tour-data, the rest in the survey itself.
+  const tour = readFileSync('src/tour-data.ts', 'utf8');
+  const companions = tour.slice(tour.indexOf('export const companions'), tour.indexOf('export const sectionLabels'));
+  const names = new Set([survey, companions].flatMap((src) => [...src.matchAll(/image:'([a-z-]+)'/g)].map((m) => m[1])).concat('family'));
+  assert.equal(names.size, 12, `three steps, ten options and the panel: ${[...names].join(', ')}`);
+  for (const name of names) {
+    assert.ok(existsSync(`public/assets/survey/${name}.webp`), `public/assets/survey/${name}.webp is missing`);
+  }
 });
 
 test('the art panel faces the questions', () => {
