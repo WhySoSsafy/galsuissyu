@@ -35,6 +35,10 @@
 .tour-access-group dt{font-size:12px;color:#68766e}
 .tour-access-group dd{margin:0;font-size:13px;line-height:1.65;color:#41544b;word-break:keep-all}
 .tour-access-group dd span{display:block}
+.tour-extras{margin:12px 0 0;display:grid;gap:7px;padding:12px 13px;border:1px solid #e6ece8;border-radius:11px;background:#fff}
+.tour-extras>div{display:grid;grid-template-columns:82px minmax(0,1fr);gap:10px}
+.tour-extras dt{font-size:12px;color:#68766e}
+.tour-extras dd{margin:0;font-size:13px;line-height:1.6;color:#41544b;word-break:keep-all}
 .tour-access-note{font-size:12px!important;line-height:1.75!important;color:#7c8a83!important;margin-top:12px}
 .tour-access-note strong{color:#4d6b5c}
 .tour-access-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}

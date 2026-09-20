@@ -27,6 +27,7 @@ export function TourAccess({place,companion}:{place:TourPlace;companion:Companio
     )}</dl>
    </div>
   )}</div>:<p className="dj-detail-copy">이곳은 한국관광공사 무장애 여행정보에 등록되어 있지 않아요. 출입구 턱, 경사로, 승강기 운영은 방문 전에 직접 확인해 주세요.</p>}
+  {place.extras&&<dl className="tour-extras">{place.extras.map(x=><div key={x.name}><dt>{x.name}</dt><dd>{x.text}</dd></div>)}</dl>}
   <p className="tour-access-note">공사에 등록된 안내를 원문 그대로 보여드려요. 현장 점검 결과나 당일 운영 상태가 아니에요. 비어 있는 항목은 <strong>없다는 뜻이 아니라 등록되지 않았다는 뜻</strong>이에요.</p>
   <div className="tour-access-actions">
    <a className="tour-report" href={noteUrl(place)} target="_blank" rel="noreferrer">여기 접근성 제보하기 ↗</a>

@@ -88,6 +88,15 @@ function intro(item,contentTypeId){
  };
 }
 
+// detailInfo2 carries a handful of extras the intro call does not: admission price, whether there is
+// a toilet, parking charges. Kept as the provider's own name and wording rather than squeezed into
+// fields of our own, because the set varies by place.
+function extras(items){
+ const rows=items.map(i=>({name:String(i.infoname||'').replace(/\s+/g,' ').trim(),text:String(i.infotext||'').replace(/<br\s*\/?>/gi,' ').replace(/\s+/g,' ').trim()}))
+  .filter(r=>r.name&&r.text);
+ return rows.length?rows.slice(0,8):null;
+}
+
 // KorWithService2 returns one flat record per place. Group it the way a traveller asks the
 // question -- can I get in, can I get around, can I read it, can I hear it, can I bring the baby --
 // and keep the provider's own wording inside each field.
@@ -142,6 +151,8 @@ const places=await limit(listed,2,async({item,type})=>{
   }
  }
  if(!detail){failed++;detail=intro(null,type);}
+ let detailExtras=null;
+ try{detailExtras=extras(rows(await callWithBackoff('detailInfo2',{contentId:item.contentid,contentTypeId:type})));}catch{}
  let access=null;
  if(accessibleIds.has(String(item.contentid))){
   try{access=barrierFree(rows(await callWithBackoff('detailWithTour2',{contentId:item.contentid},BARRIER_FREE_BASE))[0]);}
@@ -162,6 +173,7 @@ const places=await limit(listed,2,async({item,type})=>{
   tel:item.tel||'',
   modifiedAt:String(item.modifiedtime||''),
   ...detail,
+  extras:detailExtras,
   barrierFree:access,
  };
 });
@@ -186,6 +198,7 @@ const snapshot={
   barrierFreeVision:places.filter(p=>p.barrierFree?.vision).length,
   barrierFreeHearing:places.filter(p=>p.barrierFree?.hearing).length,
   barrierFreeFamily:places.filter(p=>p.barrierFree?.family).length,
+  withExtras:places.filter(p=>p.extras).length,
  },
  places:places.sort((a,b)=>a.name.localeCompare(b.name,'ko')),
 };

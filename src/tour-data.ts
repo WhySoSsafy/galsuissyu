@@ -4,7 +4,8 @@ import type {CityPlace} from './city-data';
 // Every string here is the provider's own wording; nothing is rewritten into a verdict.
 export type BarrierFreeSection=Record<string,string>|null;
 export type BarrierFree={getIn:BarrierFreeSection;moveAround:BarrierFreeSection;vision:BarrierFreeSection;hearing:BarrierFreeSection;family:BarrierFreeSection};
-export type TourPlace={contentId:string;name:string;category:string;contentTypeId:string;address:string;lon:number|null;lat:number|null;image:string;thumbnail:string;tel:string;modifiedAt:string;hours:string;restDay:string;parking:string;strollerNote:string;petNote:string;phone:string;ageRange:string;barrierFree:BarrierFree|null};
+export type TourExtra={name:string;text:string};
+export type TourPlace={contentId:string;name:string;category:string;contentTypeId:string;address:string;lon:number|null;lat:number|null;image:string;thumbnail:string;tel:string;modifiedAt:string;hours:string;restDay:string;parking:string;strollerNote:string;petNote:string;phone:string;ageRange:string;extras:TourExtra[]|null;barrierFree:BarrierFree|null};
 export type TourSnapshot={source:string;services:string[];license:string;areaCode:string;collectedAt:string;counts:Record<string,number>;places:TourPlace[]};
 
 // Who a trip has to work for. The barrier-free record answers these in separate blocks, so a group
