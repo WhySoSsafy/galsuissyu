@@ -42,6 +42,36 @@ test('the places recorded are ones the app can actually name', () => {
   }
 });
 
+test('the demo plays a journey worth watching, not just a line on a map', () => {
+  // A single bus from end to end is a dot sliding across a map. A subway ride, a walk between
+  // stations and then a bus is what this app was built to show: the vehicle changes, the transfer
+  // walk is drawn on real footpaths, and the leg where it goes wrong for someone is visible. The
+  // shortcut has always promised "보행 · 지하철 · 환승 · 버스"; it now delivers it.
+  const explorer = readFileSync('src/CityExplorer.tsx', 'utf8');
+  assert.match(explorer, /보행 · 지하철 · 환승 · 버스를 이어서 재생해요/, 'the shortcut states what it will play');
+
+  const data = JSON.parse(readFileSync(file, 'utf8'));
+  const demo = data.journeys.find((j) => j.to.name === '한빛탑');
+  assert.ok(demo, 'the demo journey is recorded');
+  const played = demo.routes.find((r) => r.id === demo.playableRouteId);
+  const modes = new Set(played.legs.filter((l) => l.mode !== 'walk').map((l) => l.mode));
+  assert.ok(modes.has('subway') && modes.has('bus'), `the demo plays ${[...modes].join('+') || 'walking only'}`);
+  assert.ok(played.legs.length >= 5, 'with a transfer walk between the two rides');
+});
+
+test('the route chosen to play is not slower than the alternatives it beat', () => {
+  // Picking the richest journey would be indefensible if it also made the advice worse.
+  const data = JSON.parse(readFileSync(file, 'utf8'));
+  for (const j of data.journeys) {
+    const played = j.routes.find((r) => r.id === j.playableRouteId);
+    const sameModes = j.routes.filter((r) =>
+      r.mapObj && new Set(r.legs.filter((l) => l.mode !== 'walk').map((l) => l.mode)).size
+        === new Set(played.legs.filter((l) => l.mode !== 'walk').map((l) => l.mode)).size);
+    const quickest = Math.min(...sameModes.map((r) => r.minutes ?? Infinity));
+    assert.equal(played.minutes, quickest, `${j.to.name}: a slower route was chosen over an equal one`);
+  }
+});
+
 test('a recording is used before the provider is called, and says so', () => {
   assert.match(transit, /const journey=live\?null:findRecorded\(library,from,to,mode\);/, 'search consults the library first');
   assert.match(transit, /setFromRecording\(true\)/, 'and the panel says the answer is recorded');

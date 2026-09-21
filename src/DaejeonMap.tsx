@@ -18,7 +18,12 @@ type Props={transitGeometry:GeoJSON.FeatureCollection<GeoJSON.LineString>|null;t
 export const DaejeonMap=forwardRef<CityViewHandle,Props>(function DaejeonMap(props,ref){
  const el=useRef<HTMLDivElement>(null),map=useRef<MapLibreMap|null>(null),fallback=useRef<CityViewHandle>(null),latest=useRef(props);latest.current=props;
  const [compat,setCompat]=useState(false),[ready,setReady]=useState(false),[tilesReady,setTilesReady]=useState(false),[error,setError]=useState(''),[fatal,setFatal]=useState(false),[attempt,setAttempt]=useState(0);const markers=useRef<Marker[]>([]),selection=useRef<Marker[]>([]);
- const lastView=useRef({center:(new URLSearchParams(location.search).has('pilot')?[127.434648,36.332246]:[127.3849,36.3504]) as Coordinate,zoom:16.6,pitch:52,bearing:-24});
+ // Where a visitor from outside the city actually arrives, seen from its plaza. The bearing faces
+ // the front of the station: its long axis runs at 21.31°, so the facade is square on at 111.31°.
+ // Opening on the same place the demo run starts from means the first frame and the first button
+ // agree with each other.
+ const OPENING={center:[127.4346489288,36.3321739694] as Coordinate,zoom:16.85,pitch:60,bearing:111.31};
+ const lastView=useRef({...OPENING});
  const lengths=useMemo(()=>journeyLengths(props.route?.coordinates??[]),[props.route]);
  const cameraTracking=useRef(false);
  const arrivalMarker=useRef<Marker|null>(null);

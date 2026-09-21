@@ -66,11 +66,20 @@ for(const place of wanted){
   const {routes}=await post('routes',{from,to,mode:MODE});
   if(!routes.length)throw Error('경로가 비어 있어요');
   // Only the route the app plays needs its shape drawn; the rest stay as listed alternatives.
-  const playable=routes.find(r=>r.mapObj);
+  //
+  // Which one plays matters. A single bus from end to end is a line moving across a map; a subway
+  // ride, a walk between stations and then a bus is the thing this app was built to show — the
+  // vehicle changes, the transfer walk is drawn on real footpaths, and the leg where it can go
+  // wrong for someone is visible. So the run with the most modes wins, and the quickest among
+  // those; here that is also the faster journey, 32 minutes against 42.
+  const modes=r=>new Set(r.legs.filter(l=>l.mode!=='walk').map(l=>l.mode)).size;
+  const playable=routes.filter(r=>r.mapObj)
+   .sort((a,b)=>modes(b)-modes(a)||(a.minutes??1e9)-(b.minutes??1e9))[0];
   if(!playable)throw Error('그릴 수 있는 경로가 없어요');
   const geometry=await post('geometry',{mapObj:playable.mapObj});
   journeys.push({from:ORIGIN,to:{name:place.name,lon:place.lon,lat:place.lat},mode:MODE,playableRouteId:playable.id,routes,geometry});
-  console.log(`  ✓ ${place.name.padEnd(12)} ${String(playable.minutes).padStart(3)}분 · 구간 ${playable.legs.length} · 선형 ${geometry.features.length} · 대안 ${routes.length}개`);
+  const shape=playable.legs.map(l=>l.mode==='walk'?'보행':l.mode==='bus'?'버스':'지하철').join('→');
+  console.log(`  ✓ ${place.name.padEnd(12)} ${String(playable.minutes).padStart(3)}분 · ${shape.padEnd(22)} 대안 ${routes.length}개`);
  }catch(cause){
   failed.push(place.name);
   console.log(`  ✗ ${place.name.padEnd(12)} ${cause.message}`);
