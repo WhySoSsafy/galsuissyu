@@ -27,6 +27,10 @@ dist/
 # Real provider answers for the journeys people ask for, so the simulation does not depend on
 # someone else's uptime or on an allowance that runs out mid-session.
 !/public/data/recorded-routes.json
+# Tourism Organization audio guides and congestion forecasts: the blanks our own first screen
+# reports, filled from the same source that recorded them.
+!/public/data/audio-guides.json
+!/public/data/congestion.json
 !/public/assets/
 /public/assets/*
 !/public/assets/survey/

@@ -7,7 +7,7 @@ import type {RouteResult} from './route-engine';
 import {places as trustedPlaces} from './places';
 import {companions,toCityPlace,type Companion,type TourPlace,type TourSnapshot} from './tour-data';
 import type {BusStop} from './bus-stops';
-import {TourAccess} from './TourAccess';
+import {TourAccess} from './TourAccess';import {AudioGuidePanel,CongestionPanel} from './PlaceExtras';import {guidesFor,loadAudioGuides,loadCongestion,type AudioGuides,type Congestion} from './tour-extras';
 import './city-explorer.css';
 import './mobile-map.css';
 import './experience.css';
@@ -118,6 +118,13 @@ export default function CityExplorer({onLegacy,onPilotAssets,initialPilot,onStat
  const coverage=useMemo(()=>data?accessCoverage(data):null,[data]);
  const tourById=useMemo(()=>new Map((tour?.places??[]).map(p=>['kto-'+p.contentId,p])),[tour]);
  const selectedTour=selected?tourById.get(selected.id)??null:null;
+ // Two Tourism Organization datasets that answer what our own map could not: a way into a place for
+ // someone who cannot read the sign, and the day to go on so the crowd is not what stops you.
+ const [audio,setAudio]=useState<AudioGuides|null>(null),[crowd,setCrowd]=useState<Congestion|null>(null);
+ useEffect(()=>{const c=new AbortController();
+  loadAudioGuides(c.signal).then(setAudio);loadCongestion(c.signal).then(setCrowd);
+  return()=>c.abort();},[]);
+ const selectedGuides=useMemo(()=>guidesFor(audio,selected),[audio,selected]);
  // Hold the first-visit survey until the places file lands, so its opening step can state real counts.
  // Back and forward move between the film and the map like any other pair of pages.
  useEffect(()=>{
@@ -250,6 +257,8 @@ function choose(p:CityPlace){setPreview(false);setFollow(false);setPanelOpen(tru
      {pilotAssetForPlace(selected.id)&&<button className="dj-model-link" onClick={()=>onPilotAssets(pilotAssetForPlace(selected.id))}>이 장소의 3D 외관 살펴보기 ↗</button>}
      <AccessDetails key={selected.id} place={selected}/>
      {selectedTour&&<TourAccess place={selectedTour} companion={companion}/>}
+     <CongestionPanel data={crowd} place={selected}/>
+     <AudioGuidePanel guides={selectedGuides}/>
      <h3>이동 전에 확인해 주세요</h3>{selected.accessNotes?<ul className="dj-facts">{selected.accessNotes.map(s=><li key={s}>{s}</li>)}</ul>:<p className="dj-detail-copy">출입구의 턱, 실제 경사, 엘리베이터 연결과 당일 운영 상태는 확인되지 않았어요.{selected.category==='elevator'?' 표시는 엘리베이터의 지도 등록 위치이며 정상 작동 여부를 뜻하지 않아요.':''}</p>}
      <dl className="dj-detail-data"><div><dt>운영 시간</dt><dd>{selected.hours||'등록 정보 없음 · 방문 전 확인'}</dd></div><div><dt>이용 조건</dt><dd>{selected.access==='customers'?'고객 이용으로 등록':selected.access==='private'?'사유 시설로 등록':selected.access==='no'?'이용 불가로 등록':selected.access==='yes'?'이용 가능으로 등록 · 운영 확인 필요':'이용 조건 미확인'}</dd></div>{selected.category==='toilet'&&<div><dt>휠체어 화장실</dt><dd>{selected.toiletWheelchair==='yes'?'가능 표기 · 시설 규격 확인 필요':selected.toiletWheelchair==='no'?'불가 표기':'정보 미확인'}</dd></div>}<div><dt>자료 기준</dt><dd>{selected.verified?'관광공사 안내 확인 '+selected.checkedAt:'OSM 스냅샷 '+data?.snapshot.slice(0,10)}<small>실시간 시설 상태가 아니에요.</small></dd></div></dl>
      <div className="dj-source-links">{selected.source&&<a href={selected.source} target="_blank" rel="noreferrer">자료 원문 ↗</a>}{selected.phone&&<a href={'tel:'+selected.phone.replace(/[^+\d-]/g,'')}>전화 문의 ↗</a>}</div>

@@ -25,3 +25,39 @@
 .dj-coverage li{font-size:12px;line-height:1.7;color:#7f7469}
 .dj-coverage li b{font-weight:750;color:#5b4f44;margin-right:4px}
 .dj-coverage small{display:block;font-size:11px;color:#9c9184;margin-top:8px;line-height:1.6}
+
+/* ── 음성 안내 · 혼잡도 ───────────────────────────────────────────────────────
+   Two Tourism Organization datasets answering what our own map could not: a way into a place for
+   someone who cannot read the sign or hear the guide, and the day to go on so the crowd is not the
+   thing that stops you. */
+.place-audio,.place-crowd{border:1px solid #dbe6e0;border-radius:14px;padding:16px;margin:18px 0;background:#f8fbf9}
+.place-extra-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.place-extra-head h3{font-size:15px;margin:0}
+.place-extra-badge{font-size:11.5px;color:#28485b;background:#e6f2ea;border-radius:6px;padding:5px 8px;white-space:nowrap}
+.place-extra-lead{font-size:12.5px;line-height:1.75;color:#68786f;margin-top:9px;word-break:keep-all}
+.place-extra-note{font-size:11.5px;line-height:1.7;color:#8a938b;margin-top:11px;word-break:keep-all}
+
+.audio-list{list-style:none;margin-top:12px;display:grid;gap:8px}
+.audio-list li{background:#fff;border:1px solid #e4ebe6;border-radius:11px;padding:9px 10px}
+.audio-row{display:flex;align-items:center;gap:10px}
+.audio-play{flex-shrink:0;width:44px;height:44px;border-radius:50%;border:1px solid #28485b;background:#28485b;color:#fff;font-size:13px;line-height:1;display:grid;place-content:center}
+.audio-play.is-playing{background:#b85735;border-color:#b85735}
+.audio-what{flex:1;min-width:0}
+.audio-what strong{display:block;font-size:13.5px;line-height:1.5;color:#2c443a;word-break:keep-all}
+.audio-what small{display:block;font-size:11.5px;color:#7d8a82;margin-top:3px}
+.audio-read{flex-shrink:0;min-height:36px;padding:6px 9px;font-size:12px;color:#5d7266;border:1px solid #dde6e0;border-radius:8px;background:#fff;white-space:nowrap}
+.audio-script{margin-top:9px;padding-top:9px;border-top:1px solid #eef2ef;font-size:12.5px;line-height:1.9;color:#5f6f66;word-break:keep-all;max-height:260px;overflow-y:auto}
+
+.crowd-week{list-style:none;display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:14px}
+.crowd-week li{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 2px 7px;border-radius:9px;border:1px solid transparent}
+.crowd-week li.is-best{border-color:#9dc3ad;background:#eef7f1}
+.crowd-day{font-size:11px;color:#6f7d74;font-weight:650}
+.crowd-bar{display:flex;align-items:flex-end;justify-content:center;width:100%;height:46px}
+.crowd-bar>i{display:block;width:11px;border-radius:4px;background:#c8d6cd}
+.is-fair .crowd-bar>i{background:#e0b487}
+.is-busy .crowd-bar>i{background:#ce6b51}
+.is-quiet .crowd-bar>i{background:#7fa98c}
+.crowd-rate{font-size:11.5px;font-weight:700;color:#3f5a4c}
+.crowd-date{font-size:10px;color:#93a099}
+.crowd-advice{font-size:13px;line-height:1.8;color:#4d6a5a;margin-top:12px;word-break:keep-all}
+.crowd-advice strong{color:#28485b;font-weight:750}
