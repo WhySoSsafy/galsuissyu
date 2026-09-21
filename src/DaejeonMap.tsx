@@ -5,6 +5,7 @@ import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import {CityFallback,type CityViewHandle} from './CityFallback';
 import {cityBounds,categories,placeCoordinate,type CityPlace,type Coordinate} from './city-data';
+import {STATION_VIEW_BEARING} from './station-landmark';
 import type {RouteResult} from './route-engine';
 import type {MiniatureLayer} from './city-miniatures';
 import type {PilotLoadState} from './pilot-models';
@@ -18,11 +19,11 @@ type Props={transitGeometry:GeoJSON.FeatureCollection<GeoJSON.LineString>|null;t
 export const DaejeonMap=forwardRef<CityViewHandle,Props>(function DaejeonMap(props,ref){
  const el=useRef<HTMLDivElement>(null),map=useRef<MapLibreMap|null>(null),fallback=useRef<CityViewHandle>(null),latest=useRef(props);latest.current=props;
  const [compat,setCompat]=useState(false),[ready,setReady]=useState(false),[tilesReady,setTilesReady]=useState(false),[error,setError]=useState(''),[fatal,setFatal]=useState(false),[attempt,setAttempt]=useState(0);const markers=useRef<Marker[]>([]),selection=useRef<Marker[]>([]);
- // Where a visitor from outside the city actually arrives, seen from its plaza. The bearing faces
- // the front of the station: its long axis runs at 21.31°, so the facade is square on at 111.31°.
- // Opening on the same place the demo run starts from means the first frame and the first button
- // agree with each other.
- const OPENING={center:[127.4346489288,36.3321739694] as Coordinate,zoom:16.85,pitch:60,bearing:111.31};
+ // Where a visitor from outside the city actually arrives, meeting the station head on from its
+ // plaza. 111.31° was the guess from the building's footprint angle and it looked at the back
+ // corner; the front is the face the name is written across, and the camera is aimed at that.
+ // Opening where the demo run starts from means the first frame and the first button agree.
+ const OPENING={center:[127.43492,36.33234] as Coordinate,zoom:17.05,pitch:66,bearing:STATION_VIEW_BEARING};
  const lastView=useRef({...OPENING});
  const lengths=useMemo(()=>journeyLengths(props.route?.coordinates??[]),[props.route]);
  const cameraTracking=useRef(false);
